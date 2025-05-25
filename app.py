@@ -11,14 +11,16 @@ app = Flask(__name__)
 # In a production environment, load this from an environment variable.
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_random_key_here_replace_me_in_production')
 
-# --- Master List of All Entities ---
+# --- Master List of All Entities (Restricted as per request) ---
 # This list will populate the entity dropdown for all users.
 MASTER_ENTITIES = [
-    'First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois',
-    'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs',
-    'Celano Venture', 'Celano/GD', 'SAV LLC', 'GD Laboratory/360 Health',
-    '2AZ Investments LLC', 'GD Laboratory', 'HCM Crew LLC/ 360 Health',
-    'DarangT', 'BobS', 'HCM Crew LLC', 'Andrew S'
+    'First Bio Lab',
+    'First Bio Genetics',
+    'First Bio Lab of Illinois',
+    'AIM Laboratories',
+    'AMICO Dx',
+    'Enviro Labs',
+    'Stat Labs'
 ]
 
 # --- User Management (In-memory for demonstration, use a DB in production) ---
@@ -35,14 +37,14 @@ users = {
     'Andrew': {'password_hash': generate_password_hash('password8'), 'entities': []},
     'House': {'password_hash': generate_password_hash('password9'), 'entities': []},
     'Celano/GD': {'password_hash': generate_password_hash('password10'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
-    'SAV LLC': {'password_hash': generate_password_hash('password11'), 'entities': ['AMICO Dx']}, # Corrected access
-    'Andrew S2': {'password_hash': generate_password_hash('password12'), 'entities': ['Andrew S']},
-    'Sonny': {'password_hash': generate_password_hash('password13'), 'entities': ['AIM Laboratories']}, # Corrected access
+    'SAV LLC': {'password_hash': generate_password_hash('password11'), 'entities': ['AMICO Dx']},
+    'Andrew S2': {'password_hash': generate_password_hash('password12'), 'entities': []}, # 'Andrew S' is no longer in MASTER_ENTITIES, so this user has no selectable entities.
+    'Sonny': {'password_hash': generate_password_hash('password13'), 'entities': ['AIM Laboratories']},
     'GD Laboratory/360 Health': {'password_hash': generate_password_hash('password14'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
-    '2AZ Investments LLC': {'password_hash': generate_password_hash('password15'), 'entities': ['AMICO Dx']}, # Corrected access
+    '2AZ Investments LLC': {'password_hash': generate_password_hash('password15'), 'entities': ['AMICO Dx']},
     'GD Laboratory': {'password_hash': generate_password_hash('password16'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
     'HCM Crew LLC/ 360 Health': {'password_hash': generate_password_hash('password17'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
-    'DarangT': {'password_hash': generate_password_hash('password18'), 'entities': MASTER_ENTITIES}, # Corrected access to all MASTER_ENTITIES
+    'DarangT': {'password_hash': generate_password_hash('password18'), 'entities': MASTER_ENTITIES}, # Access to all current MASTER_ENTITIES
     'BobS': {'password_hash': generate_password_hash('password19'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']}
 }
 
@@ -182,21 +184,19 @@ if __name__ == '__main__':
                 f.write(f"This is a dummy PDF file: {filename}")
             print(f"Created dummy file: {filepath}")
 
+    # Update dummy data to only include entities from the new MASTER_ENTITIES list
     if not os.path.exists('data.csv'):
         dummy_data = {
             'Rep': [
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Genetics', 'Stat Labs',
-                'First Bio Lab of Illinois', 'AMICO Dx', 'Enviro Labs', 'Celano Venture',
-                'GD Laboratory/360 Health', '2AZ Investments LLC', 'Celano/GD', 'SAV LLC',
-                'HCM Crew LLC/ 360 Health', 'GD Laboratory', 'DarangT', 'BobS', 'HCM Crew LLC',
-                'Andrew S', 'Sonny'
+                'First Bio Lab of Illinois', 'AMICO Dx', 'Enviro Labs',
+                'First Bio Lab', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs'
             ],
-            'Value': [100, 200, 150, 300, 250, 120, 180, 400, 350, 220, 280, 190, 450, 310, 170, 290, 500, 130, 160],
+            'Value': [100, 200, 150, 300, 250, 120, 180, 110, 210, 130, 190, 260],
             'Date': [
                 '2025-01-01', '2025-01-05', '2025-01-10', '2025-01-15', '2025-01-20',
                 '2025-01-22', '2025-01-28', '2025-02-01', '2025-02-05', '2025-02-10',
-                '2025-02-15', '2025-02-20', '2025-02-25', '2025-03-01', '2025-03-05', '2025-03-10', '2025-03-15',
-                '2025-03-20', '2025-03-25'
+                '2025-02-15', '2025-02-20'
             ]
         }
         dummy_df = pd.DataFrame(dummy_data)
