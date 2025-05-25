@@ -11,9 +11,9 @@ app = Flask(__name__)
 # In a production environment, load this from an environment variable.
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_random_key_here_replace_me_in_production')
 
-# --- Master List of All Entities (Restricted as per request) ---
+# --- Master List of All Entities (RESTRICTED to the 7 core company/lab entities) ---
 # This list will populate the entity dropdown for all users.
-MASTER_ENTITIES = [
+MASTER_ENTITIES = sorted([
     'First Bio Lab',
     'First Bio Genetics',
     'First Bio Lab of Illinois',
@@ -21,31 +21,27 @@ MASTER_ENTITIES = [
     'AMICO Dx',
     'Enviro Labs',
     'Stat Labs'
-]
+])
 
-# --- User Management (In-memory for demonstration, use a DB in production) ---
-# Each user has their assigned entities for authorization purposes.
-# The entities listed here define what each user is *authorized* to select.
+# --- User Management (In-memory, with individual names as usernames) ---
+# Passwords are simple for demonstration. In production, these would be hashed and stored securely.
+# Entity access is mapped based on the previous "Rep" access to the 7 core entities.
 users = {
-    'Andrew S': {'password_hash': generate_password_hash('password1'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois']},
-    'AIM Laboratories': {'password_hash': generate_password_hash('password2'), 'entities': ['AIM Laboratories']},
-    'AMICO Dx': {'password_hash': generate_password_hash('password3'), 'entities': ['AMICO Dx']},
-    'Enviro Labs': {'password_hash': generate_password_hash('password4'), 'entities': ['Enviro Labs']},
-    'Stat Labs': {'password_hash': generate_password_hash('password5'), 'entities': ['Stat Labs']},
-    'Celano Venture': {'password_hash': generate_password_hash('password6'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
-    'HCM Crew LLC': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
-    'Andrew': {'password_hash': generate_password_hash('password8'), 'entities': []},
-    'House': {'password_hash': generate_password_hash('password9'), 'entities': []},
-    'Celano/GD': {'password_hash': generate_password_hash('password10'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
-    'SAV LLC': {'password_hash': generate_password_hash('password11'), 'entities': ['AMICO Dx']},
-    'Andrew S2': {'password_hash': generate_password_hash('password12'), 'entities': []}, # 'Andrew S' is no longer in MASTER_ENTITIES, so this user has no selectable entities.
-    'Sonny': {'password_hash': generate_password_hash('password13'), 'entities': ['AIM Laboratories']},
-    'GD Laboratory/360 Health': {'password_hash': generate_password_hash('password14'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
-    '2AZ Investments LLC': {'password_hash': generate_password_hash('password15'), 'entities': ['AMICO Dx']},
-    'GD Laboratory': {'password_hash': generate_password_hash('password16'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
-    'HCM Crew LLC/ 360 Health': {'password_hash': generate_password_hash('password17'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
-    'DarangT': {'password_hash': generate_password_hash('password18'), 'entities': MASTER_ENTITIES}, # Access to all current MASTER_ENTITIES
-    'BobS': {'password_hash': generate_password_hash('password19'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']}
+    'SatishD': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES}, # Associated with Celano Venture, HCM Crew LLC, Celano/GD, GD Laboratory/360 Health, GD Laboratory
+    'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES}, # Associated with Celano Venture, HCM Crew LLC, Celano/GD, GD Laboratory/360 Health, GD Laboratory
+    'AshlieT': {'password_hash': generate_password_hash('password3'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']}, # Associated with Celano Venture, HCM Crew LLC
+    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']}, # Associated with Celano Venture
+    'MinaK': {'password_hash': generate_password_hash('password5'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']}, # Associated with Celano Venture, HCM Crew LLC
+    'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES}, # Associated with HCM Crew LLC, HCM Crew LLC/ 360 Health
+    'Andrew': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics']}, # Associated with HCM Crew LLC, retaining specific access from previous Andrew user
+    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois']}, # Associated with HCM Crew LLC, Andrew S
+    'House': {'password_hash': generate_password_hash('password9'), 'entities': []}, # Associated with HCM Crew LLC, retaining empty access from previous House user
+    'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx']}, # Associated with SAV LLC
+    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories']}, # Associated with Sonny
+    'Omar': {'password_hash': generate_password_hash('password12'), 'entities': MASTER_ENTITIES}, # Associated with GD Laboratory/360 Health, HCM Crew LLC/ 360 Health
+    'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['AMICO Dx']}, # Associated with 2AZ Investments LLC
+    'DarangT': {'password_hash': generate_password_hash('password14'), 'entities': MASTER_ENTITIES}, # Associated with DarangT (itself), retains access to all MASTER_ENTITIES
+    'BobS': {'password_hash': generate_password_hash('password15'), 'entities': MASTER_ENTITIES}, # Associated with BobS (itself), retains access to all MASTER_ENTITIES
 }
 
 # --- Data Loading (Optimized: Load once at app startup) ---
