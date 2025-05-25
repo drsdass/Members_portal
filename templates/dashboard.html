@@ -1,70 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Financials</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        .table-auto { width: 100%; border-collapse: collapse; }
-        .table-auto th, .table-auto td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        .table-auto th { background-color: #f8fafc; font-weight: 600; }
-    </style>
-</head>
-<body class="bg-gray-100 min-h-screen py-8">
-    <div class="container mx-auto px-4">
-        <div class="bg-white p-8 rounded-lg shadow-lg">
-            <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Dashboard for {{ rep }}</h2>
-            <p class="text-center text-gray-600 mb-2">Selected Entity: <span class="font-semibold text-blue-700">{{ selected_entity }}</span></p>
-            <p class="text-center text-gray-600 mb-6">Viewing: <span class="font-semibold">{{ report_type | capitalize }}</span></p>
-
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">Available Reports:</h3>
-            <ul class="space-y-2 mb-8">
-                {% for file in files %}
-                    <li class="flex items-center bg-blue-50 p-3 rounded-md shadow-sm">
-                        <svg class="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.414L14.586 5A2 2 0 0115 6.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 10a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0-3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0-3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
-                        <a href="{{ file.webViewLink }}" target="_blank" class="text-blue-700 hover:underline font-medium">
-                            {{ file.name }}
-                        </a>
-                    </li>
-                {% endfor %}
-            </ul>
-
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">Data Overview:</h3>
-            {% if data %}
-                <div class="overflow-x-auto rounded-lg border border-gray-200">
-                    <table class="table-auto min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                {% for key in data[0].keys() %}
-                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ key | replace('_', ' ') | title }}</th>
-                                {% endfor %}
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for row in data %}
-                                <tr>
-                                    {% for value in row.values() %}
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ value }}</td>
-                                    {% endfor %}
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-gray-600 text-center">No data available for your selected entity or report type.</p>
-            {% endif %}
-
-            <div class="mt-8 flex justify-between items-center">
-                <a href="/select_report" class="text-blue-600 hover:underline flex items-center">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                    Back to Report Selection
-                </a>
-                <a href="/logout" class="text-red-600 hover:underline">Logout</a>
-            </div>
+    <h3 class="text-2xl font-bold text-gray-700 mb-6">Available Reports:</h3>
+    {% if files %}
+        <ul class="space-y-4 mb-10">
+            {% for file in files %}
+                <li class="flex items-center bg-blue-50 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <svg class="w-6 h-6 text-blue-600 mr-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.414L14.586 5A2 2 0 0115 6.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 10a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0-3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0-3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+                    <a href="{{ file.webViewLink }}" target="_blank" class="text-blue-700 hover:underline font-medium text-lg">
+                        {{ file.name }}
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <div class="bg-gray-50 border border-gray-200 text-gray-700 px-6 py-4 rounded-xl text-center text-lg font-medium shadow-md mb-10">
+            <p>No financial report files are currently available.</p>
         </div>
+    {% endif %}
+
+    <h3 class="text-2xl font-bold text-gray-700 mb-6">Data Overview:</h3>
+    {% if data %}
+        <div class="overflow-x-auto rounded-xl border border-gray-200 shadow-md">
+            <table class="min-w-full bg-white divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        {% for key in data[0].keys() %}
+                            <th scope="col" class="py-3 px-6 text-left text-xs font-bold text-gray-600 uppercase tracking-wider {% if loop.first %}rounded-tl-xl{% elif loop.last %}rounded-tr-xl{% endif %}">{{ key | replace('_', ' ') | title }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for row in data %}
+                        <tr class="hover:bg-blue-50 transition-colors duration-200 even:bg-gray-50">
+                            {% for value in row.values() %}
+                                <td class="py-3 px-6 whitespace-nowrap text-sm text-gray-900">{{ value }}</td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="bg-gray-50 border border-gray-200 text-gray-700 px-6 py-4 rounded-xl text-center text-lg font-medium shadow-md">
+            <p>No tabular data available for your selected entity or report type.</p>
+        </div>
+    {% endif %}
+
+    <div class="mt-10 flex flex-col sm:flex-row justify-center items-center gap-4">
+        <a href="/select_report" class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-xl shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Back to Report Selection
+        </a>
+        <a href="/logout" class="inline-flex items-center justify-center px-6 py-3 border border-blue-600 text-base font-medium rounded-xl shadow-sm text-blue-600 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200 transform hover:scale-105">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+            Logout
+        </a>
     </div>
-</body>
-</html>
+</div>
