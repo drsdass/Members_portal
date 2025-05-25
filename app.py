@@ -7,6 +7,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 
 # --- Configuration ---
+# It's crucial to set a strong secret key for session management.
+# In a production environment, load this from an environment variable.
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_random_key_here_replace_me_in_production')
 
 # --- Master List of All Entities ---
@@ -16,31 +18,32 @@ MASTER_ENTITIES = [
     'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs',
     'Celano Venture', 'Celano/GD', 'SAV LLC', 'GD Laboratory/360 Health',
     '2AZ Investments LLC', 'GD Laboratory', 'HCM Crew LLC/ 360 Health',
-    'DarangT', 'BobS'
+    'DarangT', 'BobS', 'HCM Crew LLC', 'Andrew S'
 ]
 
 # --- User Management (In-memory for demonstration, use a DB in production) ---
-# Each user still has their assigned entities for authorization purposes.
+# Each user has their assigned entities for authorization purposes.
+# The entities listed here define what each user is *authorized* to select.
 users = {
     'Andrew S': {'password_hash': generate_password_hash('password1'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois']},
     'AIM Laboratories': {'password_hash': generate_password_hash('password2'), 'entities': ['AIM Laboratories']},
     'AMICO Dx': {'password_hash': generate_password_hash('password3'), 'entities': ['AMICO Dx']},
     'Enviro Labs': {'password_hash': generate_password_hash('password4'), 'entities': ['Enviro Labs']},
     'Stat Labs': {'password_hash': generate_password_hash('password5'), 'entities': ['Stat Labs']},
-    'Celano Venture': {'password_hash': generate_password_hash('password6'), 'entities': ['Celano Venture']},
-    'HCM Crew LLC': {'password_hash': generate_password_hash('password7'), 'entities': ['HCM Crew LLC']},
+    'Celano Venture': {'password_hash': generate_password_hash('password6'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
+    'HCM Crew LLC': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
     'Andrew': {'password_hash': generate_password_hash('password8'), 'entities': []},
     'House': {'password_hash': generate_password_hash('password9'), 'entities': []},
-    'Celano/GD': {'password_hash': generate_password_hash('password10'), 'entities': ['Celano/GD']},
-    'SAV LLC': {'password_hash': generate_password_hash('password11'), 'entities': ['SAV LLC']},
+    'Celano/GD': {'password_hash': generate_password_hash('password10'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
+    'SAV LLC': {'password_hash': generate_password_hash('password11'), 'entities': ['AMICO Dx']}, # Corrected access
     'Andrew S2': {'password_hash': generate_password_hash('password12'), 'entities': ['Andrew S']},
-    'Sonny': {'password_hash': generate_password_hash('password13'), 'entities': []},
-    'GD Laboratory/360 Health': {'password_hash': generate_password_hash('password14'), 'entities': ['GD Laboratory/360 Health']},
-    '2AZ Investments LLC': {'password_hash': generate_password_hash('password15'), 'entities': ['2AZ Investments LLC']},
-    'GD Laboratory': {'password_hash': generate_password_hash('password16'), 'entities': ['GD Laboratory']},
-    'HCM Crew LLC/ 360 Health': {'password_hash': generate_password_hash('password17'), 'entities': ['HCM Crew LLC/ 360 Health']},
-    'DarangT': {'password_hash': generate_password_hash('password18'), 'entities': ['DarangT']},
-    'BobS': {'password_hash': generate_password_hash('password19'), 'entities': ['BobS']}
+    'Sonny': {'password_hash': generate_password_hash('password13'), 'entities': ['AIM Laboratories']}, # Corrected access
+    'GD Laboratory/360 Health': {'password_hash': generate_password_hash('password14'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
+    '2AZ Investments LLC': {'password_hash': generate_password_hash('password15'), 'entities': ['AMICO Dx']}, # Corrected access
+    'GD Laboratory': {'password_hash': generate_password_hash('password16'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
+    'HCM Crew LLC/ 360 Health': {'password_hash': generate_password_hash('password17'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']},
+    'DarangT': {'password_hash': generate_password_hash('password18'), 'entities': MASTER_ENTITIES}, # Corrected access to all MASTER_ENTITIES
+    'BobS': {'password_hash': generate_password_hash('password19'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories', 'AMICO Dx', 'Enviro Labs', 'Stat Labs']}
 }
 
 # --- Data Loading (Optimized: Load once at app startup) ---
@@ -70,7 +73,6 @@ def login():
         user_info = users.get(username)
         if user_info and check_password_hash(user_info['password_hash'], password):
             session['username'] = username
-            # Redirect to the combined select_report page
             return redirect(url_for('select_report'))
         else:
             return render_template('login.html', error='Invalid username or password.'), 401
@@ -92,7 +94,6 @@ def select_report():
         report_type = request.form.get('report_type')
         selected_entity = request.form.get('entity_name')
 
-        # Basic validation for report type and entity selection
         if not report_type or not selected_entity:
             return render_template(
                 'select_report.html',
@@ -100,19 +101,22 @@ def select_report():
                 error="Please select both a report type and an entity."
             )
 
-        # Authorization check: Ensure the selected entity is one the user is authorized for
         if selected_entity not in user_authorized_entities:
+            if not user_authorized_entities:
+                return render_template(
+                    'unauthorized.html',
+                    message=f"You do not have any entities assigned to view reports. Please contact support."
+                )
             return render_template(
-                'unauthorized.html',
-                message=f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity."
+                'select_report.html',
+                master_entities=MASTER_ENTITIES,
+                error=f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for."
             )
 
-        # Store selections in session
         session['report_type'] = report_type
         session['selected_entity'] = selected_entity
         return redirect(url_for('dashboard'))
     
-    # For GET request, display the selection form
     return render_template('select_report.html', master_entities=MASTER_ENTITIES)
 
 @app.route('/dashboard')
@@ -127,7 +131,6 @@ def dashboard():
     selected_entity = session['selected_entity']
     report_type = session.get('report_type')
 
-    # Filter data based on the selected entity
     if not df.empty and 'Rep' in df.columns:
         rep_data = df[df['Rep'] == selected_entity]
     else:
@@ -158,7 +161,6 @@ def dashboard():
             report_type=report_type
         )
     else:
-        # Should not happen if select_report validates, but as a fallback
         return redirect(url_for('select_report'))
 
 @app.route('/logout')
@@ -171,7 +173,6 @@ def logout():
 
 # --- Run the application ---
 if __name__ == '__main__':
-    # Ensure 'static' directory exists for PDF examples
     if not os.path.exists('static'):
         os.makedirs('static')
     for filename in ['example1.pdf', 'example2.pdf']:
@@ -181,21 +182,21 @@ if __name__ == '__main__':
                 f.write(f"This is a dummy PDF file: {filename}")
             print(f"Created dummy file: {filepath}")
 
-    # Create a dummy data.csv for demonstration if it doesn't exist
-    # Ensure 'Rep' column contains a mix of entities from MASTER_ENTITIES
     if not os.path.exists('data.csv'):
         dummy_data = {
             'Rep': [
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Genetics', 'Stat Labs',
                 'First Bio Lab of Illinois', 'AMICO Dx', 'Enviro Labs', 'Celano Venture',
                 'GD Laboratory/360 Health', '2AZ Investments LLC', 'Celano/GD', 'SAV LLC',
-                'HCM Crew LLC/ 360 Health', 'GD Laboratory', 'DarangT', 'BobS'
+                'HCM Crew LLC/ 360 Health', 'GD Laboratory', 'DarangT', 'BobS', 'HCM Crew LLC',
+                'Andrew S', 'Sonny'
             ],
-            'Value': [100, 200, 150, 300, 250, 120, 180, 400, 350, 220, 280, 190, 450, 310, 170, 290],
+            'Value': [100, 200, 150, 300, 250, 120, 180, 400, 350, 220, 280, 190, 450, 310, 170, 290, 500, 130, 160],
             'Date': [
                 '2025-01-01', '2025-01-05', '2025-01-10', '2025-01-15', '2025-01-20',
                 '2025-01-22', '2025-01-28', '2025-02-01', '2025-02-05', '2025-02-10',
-                '2025-02-15', '2025-02-20', '2025-02-25', '2025-03-01', '2025-03-05', '2025-03-10'
+                '2025-02-15', '2025-02-20', '2025-02-25', '2025-03-01', '2025-03-05', '2025-03-10', '2025-03-15',
+                '2025-03-20', '2025-03-25'
             ]
         }
         dummy_df = pd.DataFrame(dummy_data)
@@ -203,4 +204,3 @@ if __name__ == '__main__':
         print("Created dummy data.csv for demonstration.")
 
     app.run(debug=True)
-
