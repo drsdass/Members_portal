@@ -1,0 +1,4 @@
+flask
+pandas
+gunicorn
+python-dateutil==2.8.2

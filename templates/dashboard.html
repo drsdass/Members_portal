@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Dashboard</h1>
+    {% if report_type == 'financials' %}
+        <h2>Financial Reports</h2>
+        <ul>
+            {% for file in files %}
+                <li><a href="{{ file.webViewLink }}">{{ file.name }}</a></li>
+            {% endfor %}
+        </ul>
+    {% elif report_type == 'monthly_bonus' %}
+        <h2>Monthly Bonus</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Location</th>
+                    <th>Reimbursement</th>
+                    <th>COGS</th>
+                    <th>Net</th>
+                    <th>Commission</th>
+                    <th>Rep</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                    <tr>
+                        <td>{{ row.Location }}</td>
+                        <td>{{ row.Reimbursement }}</td>
+                        <td>{{ row.COGS }}</td>
+                        <td>{{ row.Net }}</td>
+                        <td>{{ row.Commission }}</td>
+                        <td>{{ row.Rep }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Invalid report type.</p>
+    {% endif %}
+    <p><a href="/logout">Logout</a></p>
+</body>
+</html>
