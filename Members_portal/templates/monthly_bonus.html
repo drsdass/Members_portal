@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Monthly Bonus</title>
+</head>
+<body>
+    <h1>Monthly Bonus</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Location</th>
+                <th>Reimbursement</th>
+                <th>COGS</th>
+                <th>Net</th>
+                <th>Commission</th>
+                <th>Rep</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data %}
+                <tr>
+                    <td>{{ row.Location }}</td>
+                    <td>{{ row.Reimbursement }}</td>
+                    <td>{{ row.COGS }}</td>
+                    <td>{{ row.Net }}</td>
+                    <td>{{ row.Commission }}</td>
+                    <td>{{ row.Rep }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <p><a href="/logout">Logout</a></p>
+</body>
+</html>
