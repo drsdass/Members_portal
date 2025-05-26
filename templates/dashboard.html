@@ -101,6 +101,9 @@
 </head>
 <body>
     <div class="container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo" style="max-width: 150px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+        </div>
         <h1>Financials Report for {{ rep }}</h1>
 
         <div class="report-info">
@@ -146,7 +149,7 @@
         {% endif %}
 
         <a href="{{ url_for('select_report') }}" class="back-link">Back to Report Selection</a>
-        <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
+        <a href="/logout" class="logout-link">Logout</a>
     </div>
 </body>
 </html>
