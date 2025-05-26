@@ -3,68 +3,165 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Monthly Bonus</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Monthly Bonus Report for {{ rep }}</title>
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .table-auto { width: 100%; border-collapse: collapse; }
-        .table-auto th, .table-auto td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
-        .table-auto th { background-color: #f8fafc; font-weight: 600; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            margin: 20px auto;
+        }
+        h1, h2 {
+            color: #0056b3;
+        }
+        .report-info {
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: #e9e9e9;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #0056b3;
+            color: white;
+            font-size: 0.9em;
+        }
+        tr:nth-child(even) {
+            background-color: #f2f2f2;
+        }
+        .no-data {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+        .back-link, .logout-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+        .back-link:hover, .logout-link:hover {
+            background-color: #0056b3;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .form-group select, .form-group input[type="submit"] {
+            width: auto; /* Adjust width for dropdowns */
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            margin-right: 10px; /* Space between controls */
+        }
+        .form-group input[type="submit"] {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        .form-group input[type="submit"]:hover {
+            background-color: #218838;
+        }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen py-8">
-    <div class="container mx-auto px-4">
-        <div class="bg-white p-8 rounded-lg shadow-lg">
-            <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Monthly Bonus Report for {{ rep }}</h2>
-            <p class="text-center text-gray-600 mb-2">Selected Entity: <span class="font-semibold text-blue-700">{{ selected_entity }}</span></p>
-            {% if selected_month and selected_year %}
-                <p class="text-center text-gray-600 mb-6">Period: <span class="font-semibold">{{ months[selected_month - 1].name }} {{ selected_year }}</span></p>
-            {% else %}
-                <p class="text-center text-gray-600 mb-6">Period: <span class="font-semibold">All Available Data</span></p>
-            {% endif %}
+<body>
+    <div class="container">
+        <h1>Monthly Bonus Report for {{ rep }}</h1>
 
-            <h3 class="text-xl font-semibold text-gray-700 mb-4">Data Overview:</h3>
-            {% if data %}
-                <div class="overflow-x-auto rounded-lg border border-gray-200">
-                    <table class="table-auto min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reimbursement</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">COGS</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Net</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Commission</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Associated Rep Name</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for row in data %}
-                                <tr>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ row['Date'] | default('N/A') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ row['Location'] | default('N/A') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ row['Reimbursement'] | default('N/A') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ row['COGS'] | default('N/A') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ row['Net'] | default('N/A') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ row['Commission'] | default('N/A') }}</td>
-                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ row['Associated Rep Name'] | default('N/A') }}</td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <p class="text-gray-600 text-center">No data available for the selected period, entity, or your associated lines.</p>
-            {% endif %}
-
-            <div class="mt-8 flex justify-between items-center">
-                <a href="/select_report" class="text-blue-600 hover:underline flex items-center">
-                    Back to Report Selection
-                </a>
-                <a href="/logout" class="text-red-600 hover:underline">Logout</a>
-            </div>
+        <div class="report-info">
+            <p><strong>Selected Entity:</strong> {{ selected_entity }}</p>
+            <p><strong>Period:</strong> {% if selected_month and selected_year %}{{ months[selected_month - 1].name }} {{ selected_year }}{% else %}All Available Data{% endif %}</p>
         </div>
+
+        <h2>Change Report Parameters:</h2>
+        <form action="{{ url_for('dashboard') }}" method="POST">
+            <input type="hidden" name="report_type" value="monthly_bonus">
+            <div class="form-group">
+                <label for="entity_name">Entity Type:</label>
+                <select id="entity_name" name="entity_name" required>
+                    {% for entity in master_entities %}
+                        <option value="{{ entity }}" {% if entity == selected_entity %}selected{% endif %}>{{ entity }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="month">Month:</label>
+                <select id="month" name="month">
+                    <option value="">All Months</option> {# Option to view all months if desired #}
+                    {% for m in months %}
+                        <option value="{{ m.value }}" {% if m.value == selected_month %}selected{% endif %}>{{ m.name }}</option>
+                    {% endfor %}
+                </select>
+
+                <label for="year">Year:</label>
+                <select id="year" name="year">
+                    <option value="">All Years</option> {# Option to view all years if desired #}
+                    {% for y in years %}
+                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+
+                <input type="submit" value="Generate Report">
+            </div>
+        </form>
+
+        <h2>Data Overview:</h2>
+        {% if data %}
+        <table>
+            <thead>
+                <tr>
+                    {% for key in data[0].keys() %}
+                        {% if key != 'Username' %} {# Do not display the 'Username' column #}
+                            <th>{{ key }}</th>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    {% for key, value in row.items() %}
+                        {% if key != 'Username' %} {# Do not display the 'Username' column #}
+                            <td>{{ value }}</td>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p class="no-data">No bonus data available for the selected criteria.</p>
+        {% endif %}
+
+        <a href="{{ url_for('select_report') }}" class="back-link">Back to Report Selection</a>
+        <a href="{{ url_for('logout') }}" class="logout-link">Logout</a>
     </div>
 </body>
 </html>
-
