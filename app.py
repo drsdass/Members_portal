@@ -135,7 +135,7 @@ def dashboard():
 
     rep = session['username']
     
-    # Define months and years for dropdowns (needed for monthly_bonus.html as well)
+    # Define months and years for dropdowns (needed for both dashboard.html and monthly_bonus.html)
     months = [
         {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
         {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
@@ -148,7 +148,7 @@ def dashboard():
     years = list(range(current_year - 2, current_year + 2)) # e.g., 2023, 2024, 2025, 2026
 
     if request.method == 'POST':
-        # If coming from a form submission on monthly_bonus.html
+        # If coming from a form submission on monthly_bonus.html or dashboard.html
         selected_entity = request.form.get('entity_name')
         report_type = request.form.get('report_type')
         selected_month = int(request.form.get('month')) if request.form.get('month') else None
@@ -158,7 +158,7 @@ def dashboard():
         session['selected_entity'] = selected_entity
         session['selected_month'] = selected_month
         session['selected_year'] = selected_year
-        session['report_type'] = report_type # Should always be 'monthly_bonus' from this flow
+        session['report_type'] = report_type
     else:
         # If coming from initial redirect from select_report or direct GET
         selected_entity = session.get('selected_entity')
@@ -176,7 +176,7 @@ def dashboard():
             )
         return render_template(
             'select_report.html', # Redirect back to selection if not authorized for entity
-            master_entities=MASTER_ENTITIES,
+            master_entities=MASTER_ENTITIES, # Use MASTER_ENTITIES for the initial selection page
             months=months,
             years=years,
             error=f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for."
@@ -232,7 +232,13 @@ def dashboard():
             rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
-            files=files
+            files=files,
+            # NEW: Pass necessary data for dropdowns
+            master_entities=user_authorized_entities, # Only authorized entities for this user
+            months=months,
+            years=years,
+            selected_month=selected_month,
+            selected_year=selected_year
         )
     elif report_type == 'monthly_bonus':
         return render_template(
