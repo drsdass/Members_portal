@@ -9,7 +9,8 @@
                         <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Location</th>
                         <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Reimbursement</th>
                         <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">COGS</th>
-                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Net Commission</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Net</th>
+                        <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Commission</th>
                         <th class="py-2 px-4 border-b text-left text-sm font-semibold text-gray-700">Associated Rep Name</th>
                     </tr>
                 </thead>
@@ -20,7 +21,8 @@
                         <td class="py-2 px-4 border-b text-sm text-gray-900">{{ row['Location'] | default('N/A') }}</td>
                         <td class="py-2 px-4 border-b text-sm text-gray-900">{{ row['Reimbursement'] | default('N/A') }}</td>
                         <td class="py-2 px-4 border-b text-sm text-gray-900">{{ row['COGS'] | default('N/A') }}</td>
-                        <td class="py-2 px-4 border-b text-sm text-gray-900">{{ row['Net Commission'] | default('N/A') }}</td>
+                        <td class="py-2 px-4 border-b text-sm text-gray-900">{{ row['Net'] | default('N/A') }}</td>
+                        <td class="py-2 px-4 border-b text-sm text-gray-900">{{ row['Commission'] | default('N/A') }}</td>
                         <td class="py-2 px-4 border-b text-sm text-gray-900">{{ row['Associated Rep Name'] | default('N/A') }}</td>
                     </tr>
                     {% endfor %}
@@ -34,3 +36,4 @@
         <a href="/logout" class="text-blue-600 hover:underline">Logout</a>
     </div>
 </div>
+
