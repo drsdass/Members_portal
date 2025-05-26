@@ -128,16 +128,60 @@ def select_report():
     
     return render_template('select_report.html', master_entities=MASTER_ENTITIES, months=months, years=years)
 
-@app.route('/dashboard')
+@app.route('/dashboard', methods=['GET', 'POST']) # Allow POST requests to dashboard
 def dashboard():
-    if 'username' not in session or 'report_type' not in session or 'selected_entity' not in session:
+    if 'username' not in session:
         return redirect(url_for('login'))
 
     rep = session['username']
-    selected_entity = session['selected_entity']
-    report_type = session.get('report_type')
-    selected_month = session.get('selected_month')
-    selected_year = session.get('selected_year')
+    
+    # Define months and years for dropdowns (needed for monthly_bonus.html as well)
+    months = [
+        {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
+        {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
+        {'value': 5, 'name': 'May'}, {'value': 6, 'name': 'June'},
+        {'value': 7, 'name': 'July'}, {'value': 8, 'name': 'August'},
+        {'value': 9, 'name': 'September'}, {'value': 10, 'name': 'October'},
+        {'value': 11, 'name': 'November'}, {'value': 12, 'name': 'December'}
+    ]
+    current_year = datetime.datetime.now().year
+    years = list(range(current_year - 2, current_year + 2)) # e.g., 2023, 2024, 2025, 2026
+
+    if request.method == 'POST':
+        # If coming from a form submission on monthly_bonus.html
+        selected_entity = request.form.get('entity_name')
+        report_type = request.form.get('report_type')
+        selected_month = int(request.form.get('month')) if request.form.get('month') else None
+        selected_year = int(request.form.get('year')) if request.form.get('year') else None
+
+        # Update session with new selections
+        session['selected_entity'] = selected_entity
+        session['selected_month'] = selected_month
+        session['selected_year'] = selected_year
+        session['report_type'] = report_type # Should always be 'monthly_bonus' from this flow
+    else:
+        # If coming from initial redirect from select_report or direct GET
+        selected_entity = session.get('selected_entity')
+        report_type = session.get('report_type')
+        selected_month = session.get('selected_month')
+        selected_year = session.get('selected_year')
+
+    # Authorization check for selected entity
+    user_authorized_entities = users[rep]['entities']
+    if selected_entity not in user_authorized_entities:
+        if not user_authorized_entities:
+             return render_template(
+                'unauthorized.html',
+                message=f"You do not have any entities assigned to view reports. Please contact support."
+            )
+        return render_template(
+            'select_report.html', # Redirect back to selection if not authorized for entity
+            master_entities=MASTER_ENTITIES,
+            months=months,
+            years=years,
+            error=f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for."
+        )
+
 
     filtered_data = pd.DataFrame()
 
@@ -196,7 +240,13 @@ def dashboard():
             data=filtered_data.to_dict(orient='records'),
             rep=rep,
             selected_entity=selected_entity,
-            report_type=report_type
+            report_type=report_type,
+            # NEW: Pass necessary data for dropdowns
+            master_entities=user_authorized_entities, # Only authorized entities for this user
+            months=months,
+            years=years,
+            selected_month=selected_month,
+            selected_year=selected_year
         )
     else:
         return redirect(url_for('select_report'))
@@ -221,7 +271,7 @@ if __name__ == '__main__':
     if not os.path.exists('data.csv'):
         dummy_data = {
             'Date': [
-                '2025-03-10', '2025-03-12', '2025-03-15', '2025-03-18', '2025-03-20', '2025-03-22', # March 2025 data
+                '2025-03-12', '2025-03-15', '2025-03-18', '2025-03-20', '2025-03-22', # March 2025 data
                 '2025-04-01', '2025-04-05', '2025-04-10', '2025-04-15', # April 2025 data
                 '2025-02-01', '2025-02-05', # February 2025 data
                 '2025-03-25', '2025-03-28', '2025-03-30', # More March data
@@ -230,7 +280,7 @@ if __name__ == '__main__':
                 '2025-03-01' # New row for multi-user test
             ],
             'Location': [
-                'BIRCH TREE RECOVERY', 'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
+                'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
                 'HOPESS RESIDENTIAL TREATMENT', 'JACKSON MEDICAL CENTER', 'TRIBE RECOVERY HOMES',
                 'TEST LOCATION A', 'TEST LOCATION B', 'TEST LOCATION C', 'TEST LOCATION D',
                 'OLD LOCATION X', 'OLD LOCATION Y',
@@ -239,28 +289,28 @@ if __name__ == '__main__':
                 'BETA TEST LOCATION', # Specific row for AndrewS bonus report test
                 'SHARED PERFORMANCE CLINIC' # New row for multi-user test
             ],
-            'Reimbursement': [186.49, 1.98, 150.49, 805.13, 2466.87, 76542.07,
+            'Reimbursement': [1.98, 150.49, 805.13, 2466.87, 76542.07,
                               500.00, 750.00, 120.00, 900.00,
                               300.00, 450.00,
                               600.00, 150.00, 2500.00,
                               350.00, 80.00,
                               38.85,
                               1200.00], # New row for multi-user test
-            'COGS': [150.00, 50.00, 151.64, 250.00, 1950.00, 30725.00,
+            'COGS': [50.00, 151.64, 250.00, 1950.00, 30725.00,
                      200.00, 300.00, 50.00, 400.00,
                      100.00, 150.00,
                      250.00, 70.00, 1800.00,
                      120.00, 30.00,
                      25.00,
                      500.00], # New row for multi-user test
-            'Net': [36.49, -48.02, -1.15, 555.13, 516.87, 45817.07,
+            'Net': [-48.02, -1.15, 555.13, 516.87, 45817.07,
                                300.00, 450.00, 70.00, 500.00,
                                200.00, 300.00,
                                350.00, 80.00, 700.00,
                                230.00, 50.00,
                                13.85,
                                700.00], # New row for multi-user test
-            'Commission': [10.94, -14.40, -0.34, 166.53, 155.06, 13745.12,
+            'Commission': [-14.40, -0.34, 166.53, 155.06, 13745.12,
                                90.00, 135.00, 21.00, 150.00,
                                60.00, 90.00,
                                105.00, 24.00, 210.00,
@@ -268,7 +318,7 @@ if __name__ == '__main__':
                                4.16,
                                210.00], # New row for multi-user test
             'Entity': [
-                'First Bio Lab', 'AIM Laboratories', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx', 'Enviro Labs', # March data
+                'AIM Laboratories', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx', 'Enviro Labs', # March data
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Genetics', 'Stat Labs', # April data
                 'Enviro Labs', 'AMICO Dx', # Feb data
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Lab of Illinois', # More March data
@@ -277,7 +327,7 @@ if __name__ == '__main__':
                 'First Bio Lab' # New row for multi-user test
             ],
             'Associated Rep Name': [ # This is for display in the table
-                'Andrew S', 'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
+                'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
                 'Satish D', 'ACG', 'Melinda C', 'Mina K',
                 'Vince O', 'Nick C',
                 'Ashlie T', 'Omar', 'Darang T',
@@ -286,7 +336,7 @@ if __name__ == '__main__':
                 'Andrew S, Melinda C' # New row for multi-user test
             ],
             'Username': [ # NEW COLUMN - For filtering, must match login username
-                'AndrewS', 'House', 'House', 'SonnyA', 'JayM', 'BobS',
+                'House', 'House', 'SonnyA', 'JayM', 'BobS',
                 'SatishD', 'ACG', 'MelindaC', 'MinaK',
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
