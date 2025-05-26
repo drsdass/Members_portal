@@ -29,11 +29,11 @@ users = {
     'SatishD': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES}, # Has unfiltered access
     'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES},
     'AshlieT': {'password_hash': generate_password_hash('password3'), 'entities': MASTER_ENTITIES}, # Has unfiltered access
-    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': [e for e in MASTER_ENTITIES if e != 'Stat Labs']}, # Updated: All except Stat Labs
+    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': [e for e in MASTER_ENTITIES if e != 'Stat Labs']},
     'MinaK': {'password_hash': generate_password_hash('password5'), 'entities': MASTER_ENTITIES}, # Has unfiltered access
     'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES},
-    'Andrew': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories']}, # Updated access
-    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories']}, # Confirmed as requested
+    'Andrew': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories']},
+    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories']},
     'House': {'password_hash': generate_password_hash('password9'), 'entities': []},
     'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx']},
     'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories']},
@@ -158,6 +158,18 @@ def dashboard():
                 (filtered_data['Date'].dt.year == selected_year)
             ]
         
+        # NEW FILTERING FOR MONTHLY BONUS REPORTS: Filter by 'Associated Rep Name' for non-unfiltered users
+        if report_type == 'monthly_bonus' and 'Associated Rep Name' in filtered_data.columns:
+            normalized_username = rep.strip().lower()
+            
+            # Ensure 'Associated Rep Name' column is treated as string for .str methods
+            filtered_data['Associated Rep Name'] = filtered_data['Associated Rep Name'].astype(str)
+
+            filtered_data = filtered_data[
+                filtered_data['Associated Rep Name'].str.strip().str.lower() == normalized_username
+            ]
+            print(f"User {rep} (non-unfiltered) viewing monthly bonus report. Filtered by 'Associated Rep Name'.")
+
     else:
         print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
 
@@ -170,7 +182,6 @@ def dashboard():
         ]
         return render_template(
             'dashboard.html',
-            data=filtered_data.to_dict(orient='records'), # Still pass data, but dashboard.html won't display it
             rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
@@ -211,7 +222,8 @@ if __name__ == '__main__':
                 '2025-04-01', '2025-04-05', '2025-04-10', '2025-04-15', # April 2025 data
                 '2025-02-01', '2025-02-05', # February 2025 data
                 '2025-03-25', '2025-03-28', '2025-03-30', # More March data
-                '2025-04-20', '2025-04-22' # More April data
+                '2025-04-20', '2025-04-22', # More April data
+                '2025-02-01' # Specific row for AndrewS bonus report test
             ],
             'Location': [
                 'BIRCH TREE RECOVERY', 'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
@@ -219,41 +231,48 @@ if __name__ == '__main__':
                 'TEST LOCATION A', 'TEST LOCATION B', 'TEST LOCATION C', 'TEST LOCATION D',
                 'OLD LOCATION X', 'OLD LOCATION Y',
                 'NEW CLINIC Z', 'URGENT CARE A', 'HOSPITAL B',
-                'HEALTH CENTER C', 'WELLNESS SPA D'
+                'HEALTH CENTER C', 'WELLNESS SPA D',
+                'BETA TEST LOCATION' # Specific row for AndrewS bonus report test
             ],
             'Reimbursement': [186.49, 1.98, 150.49, 805.13, 2466.87, 76542.07,
                               500.00, 750.00, 120.00, 900.00,
                               300.00, 450.00,
                               600.00, 150.00, 2500.00,
-                              350.00, 80.00],
+                              350.00, 80.00,
+                              38.85], # Specific row for AndrewS bonus report test
             'COGS': [150.00, 50.00, 151.64, 250.00, 1950.00, 30725.00,
                      200.00, 300.00, 50.00, 400.00,
                      100.00, 150.00,
                      250.00, 70.00, 1800.00,
-                     120.00, 30.00],
+                     120.00, 30.00,
+                     25.00], # Specific row for AndrewS bonus report test
             'Net': [36.49, -48.02, -1.15, 555.13, 516.87, 45817.07,
                                300.00, 450.00, 70.00, 500.00,
                                200.00, 300.00,
                                350.00, 80.00, 700.00,
-                               230.00, 50.00],
+                               230.00, 50.00,
+                               13.85], # Specific row for AndrewS bonus report test
             'Commission': [10.94, -14.40, -0.34, 166.53, 155.06, 13745.12,
                                90.00, 135.00, 21.00, 150.00,
                                60.00, 90.00,
                                105.00, 24.00, 210.00,
-                               69.00, 15.00],
+                               69.00, 15.00,
+                               4.16], # Specific row for AndrewS bonus report test
             'Entity': [
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx', 'Enviro Labs', # March data
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Genetics', 'Stat Labs', # April data
                 'Enviro Labs', 'AMICO Dx', # Feb data
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Lab of Illinois', # More March data
-                'First Bio Genetics', 'Enviro Labs' # More April data
+                'First Bio Genetics', 'Enviro Labs', # More April data
+                'AIM Laboratories' # Specific row for AndrewS bonus report test
             ],
             'Associated Rep Name': [ # This column will now contain the individual names
                 'AndrewS', 'House', 'House', 'SonnyA', 'JayM', 'BobS',
                 'SatishD', 'ACG', 'MelindaC', 'MinaK',
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
-                'Andrew', 'JayM'
+                'Andrew', 'JayM',
+                'AndrewS' # Specific row for AndrewS bonus report test
             ]
         }
         dummy_df = pd.DataFrame(dummy_data)
