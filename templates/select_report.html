@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,10 +8,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            max-width: 90%;
+            margin: 20px auto;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
     <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo" style="max-width: 150px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+        </div>
         <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Select Report and Entity</h2>
         <p class="text-center text-gray-600 mb-6">Welcome, {{ session['username'] }}!</p>
         {% if error %}
@@ -36,31 +48,6 @@
                     <option value="monthly_bonus">Monthly Bonus Report</option>
                 </select>
             </div>
-            
-            <div id="month_year_selection" class="space-y-4">
-                <label class="block text-sm font-medium text-gray-700">Select Month and Year (for Monthly Bonus Report):</label>
-                <div class="flex space-x-4">
-                    <div class="w-1/2">
-                        <label for="month" class="block text-sm font-medium text-gray-700 sr-only">Month:</label>
-                        <select id="month" name="month" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option value="">-- Select Month --</option>
-                            {% for month in months %}
-                                <option value="{{ month.value }}">{{ month.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="w-1/2">
-                        <label for="year" class="block text-sm font-medium text-gray-700 sr-only">Year:</label>
-                        <select id="year" name="year" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option value="">-- Select Year --</option>
-                            {% for year in years %}
-                                <option value="{{ year }}">{{ year }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-            </div>
-
             <button type="submit"
                     class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
                 View Report
@@ -70,26 +57,5 @@
             <a href="/logout" class="text-blue-600 hover:underline">Logout</a>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const reportTypeSelect = document.getElementById('report_type');
-            const monthYearSelection = document.getElementById('month_year_selection');
-
-            function toggleMonthYear() {
-                if (reportTypeSelect.value === 'monthly_bonus') {
-                    monthYearSelection.style.display = 'block';
-                } else {
-                    monthYearSelection.style.display = 'none';
-                }
-            }
-
-            // Initial state
-            toggleMonthYear();
-
-            // Add event listener for changes
-            reportTypeSelect.addEventListener('change', toggleMonthYear);
-        });
-    </script>
 </body>
 </html>
