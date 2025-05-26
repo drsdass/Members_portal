@@ -158,18 +158,17 @@ def dashboard():
                 (filtered_data['Date'].dt.year == selected_year)
             ]
         
-        # NEW FILTERING FOR MONTHLY BONUS REPORTS: Filter by 'Associated Rep Name' for non-unfiltered users
-        if report_type == 'monthly_bonus' and 'Associated Rep Name' in filtered_data.columns:
+        # NEW FILTERING FOR MONTHLY BONUS REPORTS: Filter by 'Username' column for non-unfiltered users
+        if report_type == 'monthly_bonus' and 'Username' in filtered_data.columns: # Changed to 'Username'
             normalized_username = rep.strip().lower()
             
-            # Ensure 'Associated Rep Name' column is treated as string for .str methods
-            filtered_data['Associated Rep Name'] = filtered_data['Associated Rep Name'].astype(str)
+            # Ensure 'Username' column is treated as string for .str methods
+            filtered_data['Username'] = filtered_data['Username'].astype(str)
 
             filtered_data = filtered_data[
-                filtered_data['Associated Rep Name'].str.strip().str.lower() == normalized_username
+                filtered_data['Username'].str.strip().str.lower() == normalized_username
             ]
-            print(f"User {rep} (non-unfiltered) viewing monthly bonus report. Filtered by 'Associated Rep Name'.")
-
+            print(f"User {rep} (non-unfiltered) viewing monthly bonus report. Filtered by 'Username' column.")
     else:
         print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
 
@@ -266,13 +265,21 @@ if __name__ == '__main__':
                 'First Bio Genetics', 'Enviro Labs', # More April data
                 'AIM Laboratories' # Specific row for AndrewS bonus report test
             ],
-            'Associated Rep Name': [ # This column will now contain the individual names
+            'Associated Rep Name': [ # This is for display in the table
+                'Andrew S', 'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
+                'Satish D', 'ACG', 'Melinda C', 'Mina K',
+                'Vince O', 'Nick C',
+                'Ashlie T', 'Omar', 'Darang T',
+                'Andrew', 'Jay M',
+                'Andrew S' # Specific row for AndrewS bonus report test
+            ],
+            'Username': [ # NEW COLUMN - For filtering, must match login username
                 'AndrewS', 'House', 'House', 'SonnyA', 'JayM', 'BobS',
                 'SatishD', 'ACG', 'MelindaC', 'MinaK',
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
                 'Andrew', 'JayM',
-                'AndrewS' # Specific row for AndrewS bonus report test
+                'AndrewS' # Matches AndrewS login username
             ]
         }
         dummy_df = pd.DataFrame(dummy_data)
