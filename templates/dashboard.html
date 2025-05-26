@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Financials</title>
+    <title>Financials Report for {{ rep }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -90,6 +90,13 @@
         .form-group input[type="submit"]:hover {
             background-color: #218838;
         }
+        ul {
+            list-style-type: none; /* Remove default bullet points */
+            padding: 0;
+        }
+        li {
+            margin-bottom: 5px;
+        }
     </style>
 </head>
 <body>
@@ -98,7 +105,7 @@
 
         <div class="report-info">
             <p><strong>Selected Entity:</strong> {{ selected_entity }}</p>
-            <p><strong>Period:</strong> {% if selected_month and selected_year %}{{ months[selected_month - 1].name }} {{ selected_year }}{% else %}All Available Data{% endif %}</p>
+            <p><strong>Period:</strong> {% if selected_year %}{{ selected_year }}{% else %}All Available Data{% endif %}</p>
         </div>
 
         <h2>Change Report Parameters:</h2>
@@ -109,14 +116,6 @@
                 <select id="entity_name" name="entity_name" required>
                     {% for entity in master_entities %}
                         <option value="{{ entity }}" {% if entity == selected_entity %}selected{% endif %}>{{ entity }}</option>
-                    {% endfor %}
-                </select>
-
-                <label for="month">Month:</label>
-                <select id="month" name="month">
-                    <option value="">All Months</option> {# Option to view all months if desired #}
-                    {% for m in months %}
-                        <option value="{{ m.value }}" {% if m.value == selected_month %}selected{% endif %}>{{ m.name }}</option>
                     {% endfor %}
                 </select>
 
@@ -134,13 +133,16 @@
 
         <h2>Available Reports:</h2>
         {% if files %}
-            <ul>
-                {% for file in files %}
-                    <li><a href="{{ file.webViewLink }}" target="_blank">{{ file.name }}</a></li>
-                {% endfor %}
-            </ul>
+            {% for year, reports in files.items() %}
+                <h3>{{ year }}</h3>
+                <ul>
+                    {% for file in reports %}
+                        <li><a href="{{ file.webViewLink }}" target="_blank">{{ file.name }}</a></li>
+                    {% endfor %}
+                </ul>
+            {% endfor %}
         {% else %}
-            <p class="no-data">No financial report files are currently available.</p>
+            <p class="no-data">No financial report files are currently available for the selected year.</p>
         {% endif %}
 
         <a href="{{ url_for('select_report') }}" class="back-link">Back to Report Selection</a>
