@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -94,6 +95,9 @@
 </head>
 <body>
     <div class="container">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo" style="max-width: 150px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+        </div>
         <h1>Monthly Bonus Report for {{ rep }}</h1>
 
         <div class="report-info">
@@ -134,30 +138,32 @@
 
         <h2>Data Overview:</h2>
         {% if data %}
-        <table>
-            <thead>
-                <tr>
-                    {% for key in data[0].keys() %}
-                        {% if key != 'Username' %} {# Do not display the 'Username' column #}
-                            <th>{{ key }}</th>
-                        {% endif %}
-                    {% endfor %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in data %}
-                <tr>
-                    {% for key, value in row.items() %}
-                        {% if key != 'Username' %} {# Do not display the 'Username' column #}
-                            <td>{{ value }}</td>
-                        {% endif %}
-                    {% endfor %}
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="table-auto min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            {% for key in data[0].keys() %}
+                                {% if key != 'Username' %} {# Do not display the 'Username' column #}
+                                    <th>{{ key }}</th>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for row in data %}
+                            <tr>
+                                {% for key, value in row.items() %}
+                                    {% if key != 'Username' %} {# Do not display the 'Username' column #}
+                                        <td>{{ value }}</td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
-        <p class="no-data">No bonus data available for the selected criteria.</p>
+            <p class="no-data">No bonus data available for the selected criteria.</p>
         {% endif %}
 
         <a href="{{ url_for('select_report') }}" class="back-link">Back to Report Selection</a>
