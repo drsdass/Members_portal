@@ -3,6 +3,7 @@ import pandas as pd
 from flask import Flask, render_template, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
+import re # Import the regular expression module
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -165,8 +166,11 @@ def dashboard():
             # Ensure 'Username' column is treated as string for .str methods
             filtered_data['Username'] = filtered_data['Username'].astype(str)
 
+            # Updated logic: Check if the normalized_username is contained within the (potentially comma-separated) Username string
+            # Using regex for word boundaries to avoid partial matches (e.g., 'and' matching 'andrewS')
+            regex_pattern = r'\b' + re.escape(normalized_username) + r'\b'
             filtered_data = filtered_data[
-                filtered_data['Username'].str.strip().str.lower() == normalized_username
+                filtered_data['Username'].str.strip().str.lower().str.contains(regex_pattern, na=False)
             ]
             print(f"User {rep} (non-unfiltered) viewing monthly bonus report. Filtered by 'Username' column.")
     else:
@@ -222,7 +226,8 @@ if __name__ == '__main__':
                 '2025-02-01', '2025-02-05', # February 2025 data
                 '2025-03-25', '2025-03-28', '2025-03-30', # More March data
                 '2025-04-20', '2025-04-22', # More April data
-                '2025-02-01' # Specific row for AndrewS bonus report test
+                '2025-02-01', # Specific row for AndrewS bonus report test
+                '2025-03-01' # New row for multi-user test
             ],
             'Location': [
                 'BIRCH TREE RECOVERY', 'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
@@ -231,39 +236,45 @@ if __name__ == '__main__':
                 'OLD LOCATION X', 'OLD LOCATION Y',
                 'NEW CLINIC Z', 'URGENT CARE A', 'HOSPITAL B',
                 'HEALTH CENTER C', 'WELLNESS SPA D',
-                'BETA TEST LOCATION' # Specific row for AndrewS bonus report test
+                'BETA TEST LOCATION', # Specific row for AndrewS bonus report test
+                'SHARED PERFORMANCE CLINIC' # New row for multi-user test
             ],
             'Reimbursement': [186.49, 1.98, 150.49, 805.13, 2466.87, 76542.07,
                               500.00, 750.00, 120.00, 900.00,
                               300.00, 450.00,
                               600.00, 150.00, 2500.00,
                               350.00, 80.00,
-                              38.85], # Specific row for AndrewS bonus report test
+                              38.85,
+                              1200.00], # New row for multi-user test
             'COGS': [150.00, 50.00, 151.64, 250.00, 1950.00, 30725.00,
                      200.00, 300.00, 50.00, 400.00,
                      100.00, 150.00,
                      250.00, 70.00, 1800.00,
                      120.00, 30.00,
-                     25.00], # Specific row for AndrewS bonus report test
+                     25.00,
+                     500.00], # New row for multi-user test
             'Net': [36.49, -48.02, -1.15, 555.13, 516.87, 45817.07,
                                300.00, 450.00, 70.00, 500.00,
                                200.00, 300.00,
                                350.00, 80.00, 700.00,
                                230.00, 50.00,
-                               13.85], # Specific row for AndrewS bonus report test
+                               13.85,
+                               700.00], # New row for multi-user test
             'Commission': [10.94, -14.40, -0.34, 166.53, 155.06, 13745.12,
                                90.00, 135.00, 21.00, 150.00,
                                60.00, 90.00,
                                105.00, 24.00, 210.00,
                                69.00, 15.00,
-                               4.16], # Specific row for AndrewS bonus report test
+                               4.16,
+                               210.00], # New row for multi-user test
             'Entity': [
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx', 'Enviro Labs', # March data
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Genetics', 'Stat Labs', # April data
                 'Enviro Labs', 'AMICO Dx', # Feb data
                 'First Bio Lab', 'AIM Laboratories', 'First Bio Lab of Illinois', # More March data
                 'First Bio Genetics', 'Enviro Labs', # More April data
-                'AIM Laboratories' # Specific row for AndrewS bonus report test
+                'AIM Laboratories', # Specific row for AndrewS bonus report test
+                'First Bio Lab' # New row for multi-user test
             ],
             'Associated Rep Name': [ # This is for display in the table
                 'Andrew S', 'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
@@ -271,7 +282,8 @@ if __name__ == '__main__':
                 'Vince O', 'Nick C',
                 'Ashlie T', 'Omar', 'Darang T',
                 'Andrew', 'Jay M',
-                'Andrew S' # Specific row for AndrewS bonus report test
+                'Andrew S', # Specific row for AndrewS bonus report test
+                'Andrew S, Melinda C' # New row for multi-user test
             ],
             'Username': [ # NEW COLUMN - For filtering, must match login username
                 'AndrewS', 'House', 'House', 'SonnyA', 'JayM', 'BobS',
@@ -279,7 +291,8 @@ if __name__ == '__main__':
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
                 'Andrew', 'JayM',
-                'AndrewS' # Matches AndrewS login username
+                'AndrewS', # Matches AndrewS login username
+                'AndrewS,MelindaC' # Allows both AndrewS and MelindaC to see this line
             ]
         }
         dummy_df = pd.DataFrame(dummy_data)
