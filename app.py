@@ -220,24 +220,70 @@ def dashboard():
     else:
         print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
 
-    if report_type == 'financials':
-        files = [
-            {'name': '2023 Full Report.pdf', 'webViewLink': url_for('static', filename='example1.pdf')},
-            {'name': '2024 Full Report.pdf', 'webViewLink': url_for('static', filename='example2.pdf')},
-            {'name': '2025 YTD Financials.pdf', 'webViewLink': url_for('static', filename='example1.pdf')},
-            {'name': '2025 Last Month Financials.pdf', 'webViewLink': url_for('static', filename='example2.pdf')}
+    # Define financial files structure
+    financial_files_data = {
+        2023: [
+            {'name': '2023 1Q Profit and Loss', 'filename': '2023_1Q_PL.pdf'},
+            {'name': '2023 1Q Balance Sheet', 'filename': '2023_1Q_BS.pdf'},
+            {'name': '2023 2Q Profit and Loss', 'filename': '2023_2Q_PL.pdf'},
+            {'name': '2023 2Q Balance Sheet', 'filename': '2023_2Q_BS.pdf'},
+            {'name': '2023 3Q Profit and Loss', 'filename': '2023_3Q_PL.pdf'},
+            {'name': '2023 3Q Balance Sheet', 'filename': '2023_3Q_BS.pdf'},
+            {'name': '2023 4Q Profit and Loss', 'filename': '2023_4Q_PL.pdf'},
+            {'name': '2023 4Q Balance Sheet', 'filename': '2023_4Q_BS.pdf'},
+            {'name': '2023 Annual Report', 'filename': '2023_Annual.pdf'}
+        ],
+        2024: [
+            {'name': '2024 1Q Profit and Loss', 'filename': '2024_1Q_PL.pdf'},
+            {'name': '2024 1Q Balance Sheet', 'filename': '2024_1Q_BS.pdf'},
+            {'name': '2024 2Q Profit and Loss', 'filename': '2024_2Q_PL.pdf'},
+            {'name': '2024 2Q Balance Sheet', 'filename': '2024_2Q_BS.pdf'},
+            {'name': '2024 3Q Profit and Loss', 'filename': '2024_3Q_PL.pdf'},
+            {'name': '2024 3Q Balance Sheet', 'filename': '2024_3Q_BS.pdf'},
+            {'name': '2024 4Q Profit and Loss', 'filename': '2024_4Q_PL.pdf'},
+            {'name': '2024 4Q Balance Sheet', 'filename': '2024_4Q_BS.pdf'},
+            {'name': '2024 Annual Report', 'filename': '2024_Annual.pdf'}
+        ],
+        2025: [
+            {'name': '2025 1Q Profit and Loss', 'filename': '2025_1Q_PL.pdf'}, # Corrected typo here
+            {'name': '2025 1Q Balance Sheet', 'filename': '2025_1Q_BS.pdf'},
+            {'name': '2025 2Q Profit and Loss', 'filename': '2025_2Q_PL.pdf'},
+            {'name': '2025 2Q Balance Sheet', 'filename': '2025_2Q_BS.pdf'},
+            {'name': '2025 3Q Profit and Loss', 'filename': '2025_3Q_PL.pdf'},
+            {'name': '2025 3Q Balance Sheet', 'filename': '2025_3Q_BS.pdf'},
+            {'name': '2025 4Q Profit and Loss', 'filename': '2025_4Q_PL.pdf'},
+            {'name': '2025 4Q Balance Sheet', 'filename': '2025_4Q_BS.pdf'},
+            {'name': '2025 Annual Report', 'filename': '2025_Annual.pdf'},
+            {'name': '2025 YTD Report', 'filename': '2025_YTD.pdf'}
         ]
+    }
+
+    if report_type == 'financials':
+        # Filter files based on selected_year if provided, otherwise show all years
+        files_to_display = {}
+        if selected_year:
+            if selected_year in financial_files_data:
+                files_to_display[selected_year] = [
+                    {'name': item['name'], 'webViewLink': url_for('static', filename=item['filename'])}
+                    for item in financial_files_data[selected_year]
+                ]
+            else:
+                files_to_display = {} # No files for the selected year
+        else:
+            for year, reports in financial_files_data.items():
+                files_to_display[year] = [
+                    {'name': item['name'], 'webViewLink': url_for('static', filename=item['filename'])}
+                    for item in reports
+                ]
+
         return render_template(
             'dashboard.html',
             rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
-            files=files,
-            # NEW: Pass necessary data for dropdowns
+            files=files_to_display, # Pass the structured files data
             master_entities=user_authorized_entities, # Only authorized entities for this user
-            months=months,
-            years=years,
-            selected_month=selected_month,
+            years=years, # Only years dropdown for financials
             selected_year=selected_year
         )
     elif report_type == 'monthly_bonus':
@@ -247,7 +293,6 @@ def dashboard():
             rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
-            # NEW: Pass necessary data for dropdowns
             master_entities=user_authorized_entities, # Only authorized entities for this user
             months=months,
             years=years,
@@ -266,11 +311,21 @@ def logout():
 if __name__ == '__main__':
     if not os.path.exists('static'):
         os.makedirs('static')
-    for filename in ['example1.pdf', 'example2.pdf']:
+    
+    # Create dummy PDF files for financial reports
+    financial_pdf_names = []
+    for year in range(2023, 2026):
+        for q in ['1Q', '2Q', '3Q', '4Q']:
+            financial_pdf_names.append(f"{year}_{q}_PL.pdf")
+            financial_pdf_names.append(f"{year}_{q}_BS.pdf")
+        financial_pdf_names.append(f"{year}_Annual.pdf")
+    financial_pdf_names.append("2025_YTD.pdf") # Add the 2025 YTD report
+
+    for filename in financial_pdf_names:
         filepath = os.path.join('static', filename)
         if not os.path.exists(filepath):
             with open(filepath, 'w') as f:
-                f.write(f"This is a dummy PDF file: {filename}")
+                f.write(f"This is a dummy PDF file for {filename}")
             print(f"Created dummy file: {filepath}")
 
     # Create dummy data.csv if it doesn't exist, with new columns and example data
