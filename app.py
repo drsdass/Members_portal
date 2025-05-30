@@ -299,6 +299,22 @@ def dashboard():
             selected_month=selected_month,
             selected_year=selected_year
         )
+    # NEW: Handle 'requisitions' and 'marketing_material'
+    elif report_type == 'requisitions':
+        # You would fetch or generate data/files relevant to requisitions here
+        # For now, let's return a simple placeholder page or redirect
+        return render_template(
+            'generic_report.html', # Create a generic_report.html template for these
+            report_title="Requisitions Report",
+            message=f"Requisitions report for {selected_entity} is under development."
+        )
+    elif report_type == 'marketing_material':
+        # You would fetch or generate data/files relevant to marketing material here
+        return render_template(
+            'generic_report.html', # Create a generic_report.html template for these
+            report_title="Marketing Material Report",
+            message=f"Marketing Material for {selected_entity} is under development."
+        )
     else:
         return redirect(url_for('select_report'))
 
