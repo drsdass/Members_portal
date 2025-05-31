@@ -95,18 +95,17 @@
 
         /* Styles for the main logo */
         .logo-img {
-            max-width: 150px; /* Adjust as needed for larger size */
+            max-width: 150px; /* Keep prominent size */
             height: auto;
-            margin-right: 15px;
-            opacity: 1.0; /* Removed transparency (1.0 is fully opaque) */
+            margin-right: 20px; /* Increased margin for separation */
+            opacity: 1.0;
         }
 
         /* Styles for secondary logos */
         .secondary-logo-img {
-            max-width: 50px; /* Adjust as needed for smaller secondary logos */
+            max-width: 70px; /* Made a bit larger */
             height: auto;
-            margin-left: 10px; /* Space between logos */
-            opacity: 1.0; /* Keep them opaque */
+            opacity: 1.0;
         }
 
         /* Navbar styles */
@@ -116,7 +115,13 @@
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
             display: flex;
             align-items: center;
-            justify-content: space-between; /* To push logout button to the right */
+            justify-content: space-between; /* Distribute items: left, center, right */
+            flex-wrap: wrap; /* Allow wrapping on smaller screens */
+        }
+
+        .navbar-left {
+            display: flex;
+            align-items: center;
         }
 
         .navbar-brand {
@@ -124,11 +129,22 @@
             font-weight: bold;
             display: flex;
             align-items: center;
-            text-decoration: none; /* Remove underline from brand link */
+            text-decoration: none;
         }
 
         .navbar-brand:hover {
             color: #f8f9fa !important;
+        }
+
+        /* Container for secondary logos */
+        .navbar-secondary-logos {
+            display: flex;
+            flex-grow: 1; /* Allow this section to take available space */
+            justify-content: space-evenly; /* Distribute logos evenly */
+            align-items: center;
+            margin: 0 20px; /* Add some horizontal margin */
+            flex-wrap: wrap; /* Allow secondary logos to wrap if needed */
+            gap: 10px; /* Space between secondary logos */
         }
 
         .logout-button {
@@ -141,7 +157,6 @@
             font-size: 1rem;
             text-decoration: none; /* Ensure it looks like a button not a link */
             display: inline-block; /* Allows padding and margin to work correctly */
-            margin-left: auto; /* Push to the right */
         }
 
         .logout-button:hover {
@@ -162,9 +177,13 @@
 </head>
 <body>
     <nav class="navbar">
-        <a class="navbar-brand" href="#">
-            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Main Company Logo" class="logo-img">
-            Report Dashboard
+        <div class="navbar-left">
+            <a class="navbar-brand" href="#">
+                <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Main Company Logo" class="logo-img">
+                Report Dashboard
+            </a>
+        </div>
+        <div class="navbar-secondary-logos">
             {# Add your other logos here, ensuring these files are in your 'static' folder #}
             <img src="{{ url_for('static', filename='First Bio Lab of Illinois.png') }}" alt="First Bio Lab of Illinois" class="secondary-logo-img">
             <img src="{{ url_for('static', filename='Logo.png') }}" alt="Generic Logo" class="secondary-logo-img">
@@ -172,8 +191,7 @@
             <img src="{{ url_for('static', filename='statlabs.png') }}" alt="Stat Labs Logo" class="secondary-logo-img">
             <img src="{{ url_for('static', filename='FBG Logo.png') }}" alt="FBG Logo" class="secondary-logo-img">
             <img src="{{ url_for('static', filename='Enviro Labs.png') }}" alt="Enviro Labs Logo" class="secondary-logo-img">
-            {# You can adjust the 'max-width' in .secondary-logo-img CSS to control their size. #}
-        </a>
+        </div>
         <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
     </nav>
     <div class="container">
@@ -228,4 +246,5 @@
     </div>
 </body>
 </html>
+
 
