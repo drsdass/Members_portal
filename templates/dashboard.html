@@ -93,12 +93,20 @@
             background-color: #218838;
         }
 
-        /* Styles for the logo */
+        /* Styles for the main logo */
         .logo-img {
             max-width: 150px; /* Adjust as needed for larger size */
             height: auto;
             margin-right: 15px;
-            opacity: 1.0; /* Changed: Removed transparency (1.0 is fully opaque) */
+            opacity: 1.0; /* Removed transparency (1.0 is fully opaque) */
+        }
+
+        /* Styles for secondary logos */
+        .secondary-logo-img {
+            max-width: 50px; /* Adjust as needed for smaller secondary logos */
+            height: auto;
+            margin-left: 10px; /* Space between logos */
+            opacity: 1.0; /* Keep them opaque */
         }
 
         /* Navbar styles */
@@ -157,6 +165,10 @@
         <a class="navbar-brand" href="#">
             <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo" class="logo-img">
             Report Dashboard
+            {# Add your other logos here. Make sure these image files are in your 'static' folder. #}
+            {# Example: <img src="{{ url_for('static', filename='your-secondary-logo-1.png') }}" alt="Secondary Logo 1" class="secondary-logo-img"> #}
+            {# Example: <img src="{{ url_for('static', filename='your-secondary-logo-2.png') }}" alt="Secondary Logo 2" class="secondary-logo-img"> #}
+            {# You can adjust the 'max-width' in .secondary-logo-img CSS to control their size. #}
         </a>
         <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
     </nav>
@@ -166,7 +178,6 @@
         <div class="report-info">
             <p><strong>Selected Entity:</strong> {{ selected_entity }}</p>
             <p><strong>Period:</strong> {% if selected_year %}{{ selected_year }}{% else %}All Available Years{% endif %}</p>
-            {# Removed: <p class="text-sm text-gray-500 mt-2">Note: Only files present in the 'static' folder are displayed.</p> #}
         </div>
 
         <h2>Change Report Parameters:</h2>
