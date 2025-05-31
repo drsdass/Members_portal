@@ -25,23 +25,26 @@ MASTER_ENTITIES = sorted([
 # --- Users with Unfiltered Access ---
 UNFILTERED_ACCESS_USERS = ['AshlieT', 'MinaK', 'BobS', 'SatishD']
 
-# --- User Management (In-memory, with individual names as usernames) ---
+# --- User Management (In-memory, with individual names as usernames and their roles) ---
 users = {
-    'SatishD': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES}, # Has unfiltered access
-    'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES},
-    'AshlieT': {'password_hash': generate_password_hash('password3'), 'entities': MASTER_ENTITIES}, # Has unfiltered access
-    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': [e for e in MASTER_ENTITIES if e != 'Stat Labs']},
-    'MinaK': {'password_hash': generate_password_hash('password5'), 'entities': MASTER_ENTITIES}, # Has unfiltered access
-    'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES},
-    'Andrew': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories']},
-    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories']},
-    'House': {'password_hash': generate_password_hash('password9'), 'entities': []},
-    'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx']},
-    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories']},
-    'Omar': {'password_hash': generate_password_hash('password12'), 'entities': MASTER_ENTITIES},
-    'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['AMICO Dx']},
-    'DarangT': {'password_hash': generate_password_hash('password14'), 'entities': MASTER_ENTITIES},
-    'BobS': {'password_hash': generate_password_hash('password15'), 'entities': MASTER_ENTITIES}, # Has unfiltered access
+    'SatishD': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES, 'role': 'members'}, # Has unfiltered access
+    'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES, 'role': 'members'},
+    'AshlieT': {'password_hash': generate_password_hash('password3'), 'entities': MASTER_ENTITIES, 'role': 'members'}, # Has unfiltered access
+    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': [e for e in MASTER_ENTITIES if e != 'Stat Labs'], 'role': 'members'},
+    'MinaK': {'password_hash': generate_password_hash('password5'), 'entities': MASTER_ENTITIES, 'role': 'members'}, # Has unfiltered access
+    'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES, 'role': 'members'},
+    'Andrew': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories'], 'role': 'members'},
+    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories'], 'role': 'members'},
+    'House': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'members'},
+    'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx'], 'role': 'members'},
+    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories'], 'role': 'members'},
+    'Omar': {'password_hash': generate_password_hash('password12'), 'entities': MASTER_ENTITIES, 'role': 'members'},
+    'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['AMICO Dx'], 'role': 'members'},
+    'DarangT': {'password_hash': generate_password_hash('password14'), 'entities': MASTER_ENTITIES, 'role': 'members'},
+    'BobS': {'password_hash': generate_password_hash('password15'), 'entities': MASTER_ENTITIES, 'role': 'members'},
+    # Placeholder Sales & Marketing Users - You can add more specific users here
+    'SalesUser1': {'password_hash': generate_password_hash('salespass1'), 'entities': ['AIM Laboratories', 'Enviro Labs'], 'role': 'sales_marketing'},
+    'MarketingUser1': {'password_hash': generate_password_hash('marketpass1'), 'entities': ['First Bio Genetics', 'AMICO Dx'], 'role': 'sales_marketing'},
 }
 
 # --- Data Loading (Optimized: Load once at app startup) ---
@@ -56,17 +59,47 @@ except Exception as e:
 
 # --- Routes ---
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/')
+def index():
+    """Redirects to the role selection page."""
+    return redirect(url_for('select_role'))
+
+@app.route('/select_role', methods=['GET', 'POST'])
+def select_role():
+    """Allows user to select their role (Members or Sales & Marketing)."""
+    if request.method == 'POST':
+        selected_role = request.form.get('role')
+        if selected_role in ['members', 'sales_marketing']:
+            session['selected_role'] = selected_role
+            return redirect(url_for('login'))
+        else:
+            # Handle invalid role selection, though buttons should prevent this
+            return render_template('role_selection.html', error="Invalid role selected.")
+    return render_template('role_selection.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    """
+    Handles user login after a role has been selected.
+    """
+    if 'selected_role' not in session:
+        return redirect(url_for('select_role')) # Ensure a role is selected first
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
-        user_info = users.get(username)
-        if user_info and check_password_hash(user_info['password_hash'], password):
+        
+        user_info = users.get(username) # Get user info from the flat dictionary
+
+        # Check if user exists and if their role matches the selected session role
+        if user_info and user_info.get('role') == session['selected_role'] and check_password_hash(user_info['password_hash'], password):
             session['username'] = username
             return redirect(url_for('select_report'))
         else:
             return render_template('login.html', error='Invalid username or password.'), 401
+    
+    # For GET request, render login form
     return render_template('login.html')
 
 @app.route('/select_report', methods=['GET', 'POST'])
@@ -245,7 +278,7 @@ def dashboard():
             {'name': '2024 Annual Report', 'filename': '2024_Annual.pdf'}
         ],
         2025: [
-            {'name': '2025 1Q Profit and Loss', 'filename': '2025_1Q_PL.pdf'}, # Corrected typo here
+            {'name': '2025 1Q Profit and Loss', 'filename': '2025_1Q_PL.pdf'},
             {'name': '2025 1Q Balance Sheet', 'filename': '2025_1Q_BS.pdf'},
             {'name': '2025 2Q Profit and Loss', 'filename': '2025_2Q_PL.pdf'},
             {'name': '2025 2Q Balance Sheet', 'filename': '2025_2Q_BS.pdf'},
