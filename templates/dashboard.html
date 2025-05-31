@@ -139,6 +139,17 @@
         .logout-button:hover {
             background-color: #c82333;
         }
+
+        /* Styles for clickable PDF file names */
+        .report-list li a {
+            color: #007bff; /* Blue color */
+            font-weight: bold; /* Bold font */
+            text-decoration: underline; /* Underline by default to indicate clickability */
+        }
+        .report-list li a:hover {
+            text-decoration: none; /* Remove underline on hover for a subtle effect */
+            color: #0056b3; /* Slightly darker blue on hover */
+        }
     </style>
 </head>
 <body>
@@ -155,7 +166,7 @@
         <div class="report-info">
             <p><strong>Selected Entity:</strong> {{ selected_entity }}</p>
             <p><strong>Period:</strong> {% if selected_year %}{{ selected_year }}{% else %}All Available Years{% endif %}</p>
-            <p class="text-sm text-gray-500 mt-2">Note: Only files present in the 'static' folder are displayed.</p>
+            {# Removed: <p class="text-sm text-gray-500 mt-2">Note: Only files present in the 'static' folder are displayed.</p> #}
         </div>
 
         <h2>Change Report Parameters:</h2>
