@@ -1,14 +1,15 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financials Report for {{ rep }}</title>
+    <title>Dashboard for {{ rep }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        /* Embed custom styles here since no external style.css */
         body {
             font-family: Arial, sans-serif;
-            margin: 20px;
+            margin: 0;
             background-color: #f4f4f4;
             color: #333;
         }
@@ -74,12 +75,12 @@
             font-weight: bold;
         }
         .form-group select, .form-group input[type="submit"] {
-            width: auto; /* Adjust width for dropdowns */
+            width: auto;
             padding: 8px;
             border: 1px solid #ccc;
             border-radius: 4px;
             box-sizing: border-box;
-            margin-right: 10px; /* Space between controls */
+            margin-right: 10px;
         }
         .form-group input[type="submit"] {
             background-color: #28a745;
@@ -91,25 +92,70 @@
         .form-group input[type="submit"]:hover {
             background-color: #218838;
         }
-        ul {
-            list-style-type: none; /* Remove default bullet points */
-            padding: 0;
+
+        /* Styles for the logo */
+        .logo-img {
+            max-width: 150px; /* Adjust as needed for larger size */
+            height: auto;
+            margin-right: 15px;
+            opacity: 0.6; /* Adjust as needed for transparency (0.0 fully transparent, 1.0 fully opaque) */
         }
-        li {
-            margin-bottom: 5px;
+
+        /* Navbar styles */
+        .navbar {
+            background-color: #343a40 !important;
+            padding: 10px 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between; /* To push logout button to the right */
+        }
+
+        .navbar-brand {
+            color: #fff !important;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            text-decoration: none; /* Remove underline from brand link */
+        }
+
+        .navbar-brand:hover {
+            color: #f8f9fa !important;
+        }
+
+        .logout-button {
+            background-color: #dc3545; /* Red color for logout button */
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-decoration: none; /* Ensure it looks like a button not a link */
+            display: inline-block; /* Allows padding and margin to work correctly */
+            margin-left: auto; /* Push to the right */
+        }
+
+        .logout-button:hover {
+            background-color: #c82333;
         }
     </style>
 </head>
 <body>
+    <nav class="navbar">
+        <a class="navbar-brand" href="#">
+            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo" class="logo-img">
+            Report Dashboard
+        </a>
+        <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
+    </nav>
     <div class="container">
-        <div style="text-align: center; margin-bottom: 20px;">
-            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo" style="max-width: 150px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-        </div>
-        <h1>Financials Report for {{ rep }}</h1>
+        <h1>Financial Reports for {{ rep }}</h1>
 
         <div class="report-info">
             <p><strong>Selected Entity:</strong> {{ selected_entity }}</p>
-            <p><strong>Period:</strong> {% if selected_year %}{{ selected_year }}{% else %}All Available Data{% endif %}</p>
+            <p><strong>Period:</strong> {% if selected_year %}{{ selected_year }}{% else %}All Available Years{% endif %}</p>
+            <p class="text-sm text-gray-500 mt-2">Note: Only files present in the 'static' folder are displayed.</p>
         </div>
 
         <h2>Change Report Parameters:</h2>
@@ -117,40 +163,42 @@
             <input type="hidden" name="report_type" value="financials">
             <div class="form-group">
                 <label for="entity_name">Entity Type:</label>
-                <select id="entity_name" name="entity_name" required>
+                <select id="entity_name" name="entity_name" required class="form-control">
                     {% for entity in master_entities %}
                         <option value="{{ entity }}" {% if entity == selected_entity %}selected{% endif %}>{{ entity }}</option>
                     {% endfor %}
                 </select>
 
                 <label for="year">Year:</label>
-                <select id="year" name="year">
-                    <option value="">All Years</option> {# Option to view all years if desired #}
+                <select id="year" name="year" class="form-control">
+                    <option value="">All Years</option> {# Option to view all years #}
                     {% for y in years %}
                         <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
                     {% endfor %}
                 </select>
-
-                <input type="submit" value="Generate Report">
+                <input type="submit" value="Generate Report" class="btn-primary">
             </div>
         </form>
 
-        <h2>Available Reports:</h2>
+        <h2>Available Financial Reports:</h2>
         {% if files %}
-            {% for year, reports in files.items() %}
-                <h3>{{ year }}</h3>
-                <ul>
-                    {% for file in reports %}
-                        <li><a href="{{ file.webViewLink }}" target="_blank">{{ file.name }}</a></li>
-                    {% endfor %}
-                </ul>
+            {% for year, year_files in files.items() %}
+                <div class="financial-year-section">
+                    <h3>Reports for {{ year }}:</h3>
+                    <ul class="report-list">
+                        {% for file in year_files %}
+                            <li>
+                                <a href="{{ file.webViewLink }}" target="_blank">{{ file.name }}</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
             {% endfor %}
         {% else %}
-            <p class="no-data">No financial report files are currently available for the selected year.</p>
+            <p class="no-reports-message">No financial report files are currently available for the selected entity or year.</p>
         {% endif %}
 
         <a href="{{ url_for('select_report') }}" class="back-link">Back to Report Selection</a>
-        <a href="/logout" class="logout-link">Logout</a>
     </div>
 </body>
 </html>
