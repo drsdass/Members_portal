@@ -42,9 +42,22 @@ users = {
     'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['AMICO Dx'], 'role': 'members'},
     'DarangT': {'password_hash': generate_password_hash('password14'), 'entities': MASTER_ENTITIES, 'role': 'members'},
     'BobS': {'password_hash': generate_password_hash('password15'), 'entities': MASTER_ENTITIES, 'role': 'members'},
-    # Placeholder Sales & Marketing Users - You can add more specific users here
-    'SalesUser1': {'password_hash': generate_password_hash('salespass1'), 'entities': ['AIM Laboratories', 'Enviro Labs'], 'role': 'sales_marketing'},
-    'MarketingUser1': {'password_hash': generate_password_hash('marketpass1'), 'entities': ['First Bio Genetics', 'AMICO Dx'], 'role': 'sales_marketing'},
+    # Sales & Marketing Users
+    'SalesUser1': {'password_hash': generate_password_hash('salespass1'), 'entities': MASTER_ENTITIES, 'role': 'sales_marketing'}, # Can see all entities for demo
+    'MarketingUser1': {'password_hash': generate_password_hash('marketpass1'), 'entities': MASTER_ENTITIES, 'role': 'sales_marketing'}, # Can see all entities for demo
+}
+
+# --- Define Report Types by Role ---
+REPORT_TYPES_BY_ROLE = {
+    'members': [
+        {'value': 'financials', 'name': 'Financials Report'},
+        {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'}
+    ],
+    'sales_marketing': [
+        {'value': 'requisitions', 'name': 'Requisitions'},
+        {'value': 'marketing_material', 'name': 'Marketing Material'},
+        {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'} # Monthly bonus for sales/marketing too
+    ]
 }
 
 # --- Data Loading (Optimized: Load once at app startup) ---
@@ -108,9 +121,17 @@ def select_report():
         return redirect(url_for('login'))
 
     username = session['username']
+    user_role = users[username]['role'] # Get the user's role
     user_authorized_entities = users[username]['entities']
 
-    # Generate lists for months and years for the dropdowns
+    # Filter master entities based on the user's authorized entities
+    # This ensures the dropdown only shows entities the user can access
+    display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
+
+    # Get report types based on the user's role
+    available_report_types = REPORT_TYPES_BY_ROLE.get(user_role, [])
+
+    # Generate lists for months and years for the dropdowns (for monthly bonus)
     months = [
         {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
         {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
@@ -131,24 +152,19 @@ def select_report():
         if not report_type or not selected_entity:
             return render_template(
                 'select_report.html',
-                master_entities=MASTER_ENTITIES,
+                master_entities=display_entities, # Use filtered entities here
+                available_report_types=available_report_types, # Pass filtered report types
                 months=months,
                 years=years,
                 error="Please select both a report type and an entity."
             )
 
+        # Authorization check: Ensure the selected entity is one the user is authorized for
+        # This check is now redundant if display_entities is used, but good for robustness
         if selected_entity not in user_authorized_entities:
-            if not user_authorized_entities:
-                return render_template(
-                    'unauthorized.html',
-                    message=f"You do not have any entities assigned to view reports. Please contact support."
-                )
             return render_template(
-                'select_report.html',
-                master_entities=MASTER_ENTITIES,
-                months=months,
-                years=years,
-                error=f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for."
+                'unauthorized.html',
+                message=f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity."
             )
         
         # Store selections in session
@@ -159,7 +175,13 @@ def select_report():
         
         return redirect(url_for('dashboard'))
     
-    return render_template('select_report.html', master_entities=MASTER_ENTITIES, months=months, years=years)
+    return render_template(
+        'select_report.html',
+        master_entities=display_entities, # Pass filtered entities to template
+        available_report_types=available_report_types, # Pass filtered report types to template
+        months=months,
+        years=years
+    )
 
 @app.route('/dashboard', methods=['GET', 'POST']) # Allow POST requests to dashboard
 def dashboard():
@@ -332,19 +354,17 @@ def dashboard():
             selected_month=selected_month,
             selected_year=selected_year
         )
-    # NEW: Handle 'requisitions' and 'marketing_material'
     elif report_type == 'requisitions':
-        # You would fetch or generate data/files relevant to requisitions here
-        # For now, let's return a simple placeholder page or redirect
+        # Placeholder for Requisitions report
         return render_template(
-            'generic_report.html', # Create a generic_report.html template for these
+            'generic_report.html',
             report_title="Requisitions Report",
             message=f"Requisitions report for {selected_entity} is under development."
         )
     elif report_type == 'marketing_material':
-        # You would fetch or generate data/files relevant to marketing material here
+        # Placeholder for Marketing Material report
         return render_template(
-            'generic_report.html', # Create a generic_report.html template for these
+            'generic_report.html',
             report_title="Marketing Material Report",
             message=f"Marketing Material for {selected_entity} is under development."
         )
