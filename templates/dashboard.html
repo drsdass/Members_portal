@@ -163,11 +163,15 @@
 <body>
     <nav class="navbar">
         <a class="navbar-brand" href="#">
-            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo" class="logo-img">
+            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Main Company Logo" class="logo-img">
             Report Dashboard
-            {# Add your other logos here. Make sure these image files are in your 'static' folder. #}
-            {# Example: <img src="{{ url_for('static', filename='your-secondary-logo-1.png') }}" alt="Secondary Logo 1" class="secondary-logo-img"> #}
-            {# Example: <img src="{{ url_for('static', filename='your-secondary-logo-2.png') }}" alt="Secondary Logo 2" class="secondary-logo-img"> #}
+            {# Add your other logos here, ensuring these files are in your 'static' folder #}
+            <img src="{{ url_for('static', filename='First Bio Lab of Illinois.png') }}" alt="First Bio Lab of Illinois" class="secondary-logo-img">
+            <img src="{{ url_for('static', filename='Logo.png') }}" alt="Generic Logo" class="secondary-logo-img">
+            <img src="{{ url_for('static', filename='LOGO (1).PNG') }}" alt="Generic Logo 1" class="secondary-logo-img">
+            <img src="{{ url_for('static', filename='statlabs.png') }}" alt="Stat Labs Logo" class="secondary-logo-img">
+            <img src="{{ url_for('static', filename='FBG Logo.png') }}" alt="FBG Logo" class="secondary-logo-img">
+            <img src="{{ url_for('static', filename='Enviro Labs.png') }}" alt="Enviro Labs Logo" class="secondary-logo-img">
             {# You can adjust the 'max-width' in .secondary-logo-img CSS to control their size. #}
         </a>
         <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
