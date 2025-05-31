@@ -11,14 +11,14 @@ app = Flask(__name__)
 # --- Configuration ---
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_random_key_here_replace_me_in_production')
 
-# --- Master List of All Entities (RESTRICTED to the 7 core company/lab entities) ---
+# --- Master List of All Entities (RESTRICTED to the 7 core company/lab entities, updated with LLC) ---
 MASTER_ENTITIES = sorted([
     'First Bio Lab',
-    'First Bio Genetics',
+    'First Bio Genetics LLC', # Updated
     'First Bio Lab of Illinois',
-    'AIM Laboratories',
-    'AMICO Dx',
-    'Enviro Labs',
+    'AIM Laboratories LLC',   # Updated
+    'AMICO Dx LLC',           # Updated
+    'Enviro Labs LLC',        # Updated
     'Stat Labs'
 ])
 
@@ -30,21 +30,21 @@ users = {
     'SatishD': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES, 'role': 'members'}, # Has unfiltered access
     'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES, 'role': 'members'},
     'AshlieT': {'password_hash': generate_password_hash('password3'), 'entities': MASTER_ENTITIES, 'role': 'members'}, # Has unfiltered access
-    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': [e for e in MASTER_ENTITIES if e != 'Stat Labs'], 'role': 'members'},
+    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': [e for e in MASTER_ENTITIES if e != 'Stat Labs']},
     'MinaK': {'password_hash': generate_password_hash('password5'), 'entities': MASTER_ENTITIES, 'role': 'members'}, # Has unfiltered access
     'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES, 'role': 'members'},
-    'Andrew': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories'], 'role': 'members'},
-    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics', 'First Bio Lab of Illinois', 'AIM Laboratories'], 'role': 'members'},
+    'Andrew': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'members'}, # Updated entities
+    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'members'}, # Updated entities
     'House': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'members'},
-    'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx'], 'role': 'members'},
-    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories'], 'role': 'members'},
+    'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx LLC'], 'role': 'members'}, # Updated entity
+    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories LLC'], 'role': 'members'}, # Updated entity
     'Omar': {'password_hash': generate_password_hash('password12'), 'entities': MASTER_ENTITIES, 'role': 'members'},
-    'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['AMICO Dx'], 'role': 'members'},
+    'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['AMICO Dx LLC'], 'role': 'members'}, # Updated entity
     'DarangT': {'password_hash': generate_password_hash('password14'), 'entities': MASTER_ENTITIES, 'role': 'members'},
     'BobS': {'password_hash': generate_password_hash('password15'), 'entities': MASTER_ENTITIES, 'role': 'members'},
     # Sales & Marketing Users
-    'SalesUser1': {'password_hash': generate_password_hash('salespass1'), 'entities': MASTER_ENTITIES, 'role': 'sales_marketing'}, # Can see all entities for demo
-    'MarketingUser1': {'password_hash': generate_password_hash('marketpass1'), 'entities': MASTER_ENTITIES, 'role': 'sales_marketing'}, # Can see all entities for demo
+    'SalesUser1': {'password_hash': generate_password_hash('salespass1'), 'entities': MASTER_ENTITIES, 'role': 'sales_marketing'},
+    'MarketingUser1': {'password_hash': generate_password_hash('marketpass1'), 'entities': MASTER_ENTITIES, 'role': 'sales_marketing'},
 }
 
 # --- Define Report Types by Role ---
@@ -56,24 +56,24 @@ REPORT_TYPES_BY_ROLE = {
     'sales_marketing': [
         {'value': 'requisitions', 'name': 'Requisitions'},
         {'value': 'marketing_material', 'name': 'Marketing Material'},
-        {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'} # Monthly bonus for sales/marketing too
+        {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'}
     ]
 }
 
-# --- Financial Report Definitions (for generating entity-specific filenames) ---
-# These define the parts of the display name and filename for each financial report type.
+# --- Financial Report Definitions (for generating entity-specific filenames and display names) ---
+# Each entry now specifies the display name part, the accounting basis, and the file suffix.
 FINANCIAL_REPORT_DEFINITIONS = [
-    {'display_suffix': '1Q Profit and Loss', 'file_suffix': '_1Q_PL'},
-    {'display_suffix': '1Q Balance Sheet', 'file_suffix': '_1Q_BS'},
-    {'display_suffix': '2Q Profit and Loss', 'file_suffix': '_2Q_PL'},
-    {'display_suffix': '2Q Balance Sheet', 'file_suffix': '_2Q_BS'},
-    {'display_suffix': '3Q Profit and Loss', 'file_suffix': '_3Q_PL'},
-    {'display_suffix': '3Q Balance Sheet', 'file_suffix': '_3Q_BS'},
-    {'display_suffix': '4Q Profit and Loss', 'file_suffix': '_4Q_PL'},
-    {'display_suffix': '4Q Balance Sheet', 'file_suffix': '_4Q_BS'},
-    {'display_suffix': 'Annual Report', 'file_suffix': '_Annual'},
-    {'display_suffix': 'YTD Report', 'file_suffix': '_YTD', 'applicable_years': [2025]} # Example: YTD might only apply to current year
+    {'display_name_part': 'Profit and Loss account', 'basis': 'Accrual Basis', 'file_suffix': '_PL_Accrual'},
+    {'display_name_part': 'Profit and Loss account', 'basis': 'Cash Basis', 'file_suffix': '_PL_Cash'},
+    {'display_name_part': 'Balance Sheet', 'basis': 'Accrual Basis', 'file_suffix': '_BS_Accrual'},
+    {'display_name_part': 'Balance Sheet', 'basis': 'Cash Basis', 'file_suffix': '_BS_Cash'},
+    # Add other report types if they have specific basis (e.g., Annual, YTD)
+    # For now, assuming Annual/YTD might be general or need specific basis defined later
+    # {'display_name_part': 'Annual Report', 'basis': 'Accrual Basis', 'file_suffix': '_Annual_Accrual'},
+    # {'display_name_part': 'Annual Report', 'basis': 'Cash Basis', 'file_suffix': '_Annual_Cash'},
+    # {'display_name_part': 'YTD Report', 'basis': 'Cash Basis', 'file_suffix': '_YTD_Cash', 'applicable_years': [2025]}
 ]
+
 
 # --- Data Loading (Optimized: Load once at app startup) ---
 df = pd.DataFrame() # Initialize as empty to avoid error if file not found
@@ -305,10 +305,10 @@ def dashboard():
                 if 'applicable_years' in report_def and year_val not in report_def['applicable_years']:
                     continue
 
-                # Construct the display name (e.g., "2023 First Bio Lab Annual Report")
-                display_name = f"{year_val} {selected_entity} {report_def['display_suffix']}"
+                # Construct the display name (e.g., "AIM Laboratories LLC - Balance Sheet - 2024 - Cash Basis")
+                display_name = f"{selected_entity} - {report_def['display_name_part']} - {year_val} - {report_def['basis']}"
                 
-                # Construct the filename (e.g., "FirstBioLab_2023_Annual.pdf")
+                # Construct the filename (e.g., "FirstBioLabLLC_2023_BS_Cash.pdf")
                 filename = f"{entity_filename_safe}_{year_val}{report_def['file_suffix']}.pdf"
                 filepath_check = os.path.join('static', filename)
 
@@ -371,38 +371,36 @@ if __name__ == '__main__':
     if not os.path.exists('static'):
         os.makedirs('static')
     
-    current_app_year = datetime.datetime.now().year # Use current year for generating dummy data
+    current_app_year = datetime.datetime.now().year
     
     # Create dummy PDF files for financial reports (entity-specific)
-    # We will generate files for years in the range 2023 to (current_app_year + 1)
-    for year_val in range(current_app_year - 2, current_app_year + 2): # e.g., 2023, 2024, 2025, 2026 if current is 2025
-        for entity in MASTER_ENTITIES: # Loop through all entities
-            entity_filename_safe = entity.replace(' ', '') # Prepare entity name for filename (remove spaces)
+    for year_val in range(current_app_year - 2, current_app_year + 2):
+        for entity in MASTER_ENTITIES:
+            entity_filename_safe = entity.replace(' ', '')
             for report_def in FINANCIAL_REPORT_DEFINITIONS:
-                # Skip if report type is not applicable for this year
                 if 'applicable_years' in report_def and year_val not in report_def['applicable_years']:
                     continue
 
-                # Construct the filename (e.g., "FirstBioLab_2023_1Q_PL.pdf")
+                # Construct the filename (e.g., "AIMLaboratoriesLLC_2024_BS_Cash.pdf")
                 filename_to_create = f"{entity_filename_safe}_{year_val}{report_def['file_suffix']}.pdf"
                 filepath = os.path.join('static', filename_to_create)
                 
                 if not os.path.exists(filepath):
                     with open(filepath, 'w') as f:
-                        f.write(f"This is a dummy PDF file for {entity} - {year_val} {report_def['display_suffix']}")
+                        f.write(f"This is a dummy PDF file for {entity} - {year_val} {report_def['display_name_part']} ({report_def['basis']})")
                     print(f"Created dummy file: {filepath}")
 
     # Create dummy data.csv if it doesn't exist, with new columns and example data
     if not os.path.exists('data.csv'):
         dummy_data = {
             'Date': [
-                '2025-03-12', '2025-03-15', '2025-03-18', '2025-03-20', '2025-03-22', # March 2025 data
-                '2025-04-01', '2025-04-05', '2025-04-10', '2025-04-15', # April 2025 data
-                '2025-02-01', '2025-02-05', # February 2025 data
-                '2025-03-25', '2025-03-28', '2025-03-30', # More March data
-                '2025-04-20', '2025-04-22', # More April data
-                '2025-02-01', # Specific row for AndrewS bonus report test
-                '2025-03-01' # New row for multi-user test
+                '2025-03-12', '2025-03-15', '2025-03-18', '2025-03-20', '2025-03-22',
+                '2025-04-01', '2025-04-05', '2025-04-10', '2025-04-15',
+                '2025-02-01', '2025-02-05',
+                '2025-03-25', '2025-03-28', '2025-03-30',
+                '2025-04-20', '2025-04-22',
+                '2025-02-01',
+                '2025-03-01'
             ],
             'Location': [
                 'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
@@ -411,8 +409,8 @@ if __name__ == '__main__':
                 'OLD LOCATION X', 'OLD LOCATION Y',
                 'NEW CLINIC Z', 'URGENT CARE A', 'HOSPITAL B',
                 'HEALTH CENTER C', 'WELLNESS SPA D',
-                'BETA TEST LOCATION', # Specific row for AndrewS bonus report test
-                'SHARED PERFORMANCE CLINIC' # New row for multi-user test
+                'BETA TEST LOCATION',
+                'SHARED PERFORMANCE CLINIC'
             ],
             'Reimbursement': [1.98, 150.49, 805.13, 2466.87, 76542.07,
                               500.00, 750.00, 120.00, 900.00,
@@ -420,54 +418,54 @@ if __name__ == '__main__':
                               600.00, 150.00, 2500.00,
                               350.00, 80.00,
                               38.85,
-                              1200.00], # New row for multi-user test
+                              1200.00],
             'COGS': [50.00, 151.64, 250.00, 1950.00, 30725.00,
                      200.00, 300.00, 50.00, 400.00,
                      100.00, 150.00,
                      250.00, 70.00, 1800.00,
                      120.00, 30.00,
                      25.00,
-                     500.00], # New row for multi-user test
+                     500.00],
             'Net': [-48.02, -1.15, 555.13, 516.87, 45817.07,
                                300.00, 450.00, 70.00, 500.00,
                                200.00, 300.00,
                                350.00, 80.00, 700.00,
                                230.00, 50.00,
                                13.85,
-                               700.00], # New row for multi-user test
+                               700.00],
             'Commission': [-14.40, -0.34, 166.53, 155.06, 13745.12,
                                90.00, 135.00, 21.00, 150.00,
                                60.00, 90.00,
                                105.00, 24.00, 210.00,
                                69.00, 15.00,
                                4.16,
-                               210.00], # New row for multi-user test
+                               210.00],
             'Entity': [
-                'AIM Laboratories', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx', 'Enviro Labs', # March data
-                'First Bio Lab', 'AIM Laboratories', 'First Bio Genetics', 'Stat Labs', # April data
-                'Enviro Labs', 'AMICO Dx', # Feb data
-                'First Bio Lab', 'AIM Laboratories', 'First Bio Lab of Illinois', # More March data
-                'First Bio Genetics', 'Enviro Labs', # More April data
-                'AIM Laboratories', # Specific row for AndrewS bonus report test
-                'First Bio Lab' # New row for multi-user test
+                'AIM Laboratories LLC', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx LLC', 'Enviro Labs LLC',
+                'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Genetics LLC', 'Stat Labs',
+                'Enviro Labs LLC', 'AMICO Dx LLC',
+                'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Lab of Illinois',
+                'First Bio Genetics LLC', 'Enviro Labs LLC',
+                'AIM Laboratories LLC',
+                'First Bio Lab'
             ],
-            'Associated Rep Name': [ # This is for display in the table
+            'Associated Rep Name': [
                 'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
                 'Satish D', 'ACG', 'Melinda C', 'Mina K',
                 'Vince O', 'Nick C',
                 'Ashlie T', 'Omar', 'Darang T',
                 'Andrew', 'Jay M',
-                'Andrew S', # Specific row for AndrewS bonus report test
-                'Andrew S, Melinda C' # New row for multi-user test
+                'Andrew S',
+                'Andrew S, Melinda C'
             ],
-            'Username': [ # NEW COLUMN - For filtering, must match login username
+            'Username': [
                 'House', 'House', 'SonnyA', 'JayM', 'BobS',
                 'SatishD', 'ACG', 'MelindaC', 'MinaK',
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
                 'Andrew', 'JayM',
-                'AndrewS', # Matches AndrewS login username
-                'AndrewS,MelindaC' # Allows both AndrewS and MelindaC to see this line
+                'AndrewS',
+                'AndrewS,MelindaC'
             ]
         }
         dummy_df = pd.DataFrame(dummy_data)
