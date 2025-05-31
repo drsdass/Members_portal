@@ -14,11 +14,11 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_
 # --- Master List of All Entities (RESTRICTED to the 7 core company/lab entities, updated with LLC) ---
 MASTER_ENTITIES = sorted([
     'First Bio Lab',
-    'First Bio Genetics LLC', # Updated
+    'First Bio Genetics LLC', # Updated based on file names
     'First Bio Lab of Illinois',
-    'AIM Laboratories LLC',   # Updated
-    'AMICO Dx LLC',           # Updated
-    'Enviro Labs LLC',        # Updated
+    'AIM Laboratories LLC',   # Updated based on file names
+    'AMICO Dx LLC',           # Updated based on file names
+    'Enviro Labs LLC',        # Updated based on file names
     'Stat Labs'
 ])
 
@@ -62,16 +62,17 @@ REPORT_TYPES_BY_ROLE = {
 
 # --- Financial Report Definitions (for generating entity-specific filenames and display names) ---
 # Each entry now specifies the display name part, the accounting basis, and the file suffix.
+# The file_suffix now matches the actual file names provided by the user.
 FINANCIAL_REPORT_DEFINITIONS = [
-    {'display_name_part': 'Profit and Loss account', 'basis': 'Accrual Basis', 'file_suffix': '_PL_Accrual'},
-    {'display_name_part': 'Profit and Loss account', 'basis': 'Cash Basis', 'file_suffix': '_PL_Cash'},
-    {'display_name_part': 'Balance Sheet', 'basis': 'Accrual Basis', 'file_suffix': '_BS_Accrual'},
-    {'display_name_part': 'Balance Sheet', 'basis': 'Cash Basis', 'file_suffix': '_BS_Cash'},
+    {'display_name_part': 'Profit and Loss account', 'basis': 'Accrual Basis', 'file_suffix': '-Profit and Loss account - Accrual basis'},
+    {'display_name_part': 'Profit and Loss account', 'basis': 'Cash Basis', 'file_suffix': '-Profit and Loss account - Cash Basis'},
+    {'display_name_part': 'Balance Sheet', 'basis': 'Accrual Basis', 'file_suffix': '-Balance Sheet - Accrual Basis'},
+    {'display_name_part': 'Balance Sheet', 'basis': 'Cash Basis', 'file_suffix': '-Balance Sheet - Cash Basis'},
     # Add other report types if they have specific basis (e.g., Annual, YTD)
     # For now, assuming Annual/YTD might be general or need specific basis defined later
-    # {'display_name_part': 'Annual Report', 'basis': 'Accrual Basis', 'file_suffix': '_Annual_Accrual'},
-    # {'display_name_part': 'Annual Report', 'basis': 'Cash Basis', 'file_suffix': '_Annual_Cash'},
-    # {'display_name_part': 'YTD Report', 'basis': 'Cash Basis', 'file_suffix': '_YTD_Cash', 'applicable_years': [2025]}
+    # {'display_name_part': 'Annual Report', 'basis': 'Accrual Basis', 'file_suffix': '-Annual Report - Accrual Basis'},
+    # {'display_name_part': 'Annual Report', 'basis': 'Cash Basis', 'file_suffix': '-Annual Report - Cash Basis'},
+    # {'display_name_part': 'YTD Report', 'basis': 'Cash Basis', 'file_suffix': '-YTD Report - Cash Basis', 'applicable_years': [2025]}
 ]
 
 
@@ -292,8 +293,8 @@ def dashboard():
     # --- Financial Reports Logic (Now dynamically generates names and looks for entity-specific files) ---
     if report_type == 'financials':
         files_to_display = {}
-        # Sanitize entity name for use in filenames (remove spaces)
-        entity_filename_safe = selected_entity.replace(' ', '')
+        # Sanitize entity name for use in filenames (remove spaces and 'LLC' for filename matching)
+        entity_filename_safe = selected_entity.replace(' ', '').replace('LLC', '')
         
         # Determine which years to process (all relevant years or just the selected one)
         years_to_process = [selected_year] if selected_year else range(current_year - 2, current_year + 2)
@@ -308,8 +309,45 @@ def dashboard():
                 # Construct the display name (e.g., "AIM Laboratories LLC - Balance Sheet - 2024 - Cash Basis")
                 display_name = f"{selected_entity} - {report_def['display_name_part']} - {year_val} - {report_def['basis']}"
                 
-                # Construct the filename (e.g., "FirstBioLabLLC_2023_BS_Cash.pdf")
-                filename = f"{entity_filename_safe}_{year_val}{report_def['file_suffix']}.pdf"
+                # Construct the filename (e.g., "AIMLaboratoriesLLC-Balance Sheet - 2024 - Cash Basis.pdf")
+                # Note: The file_suffix now includes spaces and hyphens as per your uploaded examples.
+                filename = f"{selected_entity}{report_def['file_suffix']}.pdf"
+                # The year needs to be inserted into the filename string.
+                # Find the position of the year in the display name part, and insert it into the filename.
+                # A more robust way would be to define filename parts more clearly in FINANCIAL_REPORT_DEFINITIONS
+                # For now, let's replace a placeholder or assume the year is always before the basis.
+                # Given your file names like "AIM Laboratories LLC - Balance Sheet - 2024 - Cash Basis.pdf"
+                # The filename should be constructed by combining entity, report_def['file_suffix'], and year.
+                # Let's adjust the filename construction to insert the year correctly.
+                
+                # Example: "AIM Laboratories LLC - Balance Sheet - 2024 - Cash Basis.pdf"
+                # entity = "AIM Laboratories LLC"
+                # report_def['file_suffix'] = "-Balance Sheet - Cash Basis"
+                # year_val = 2024
+                # We need to insert the year before the " - Cash Basis" part.
+
+                # This is a bit tricky with the exact string matching. Let's simplify the file_suffix
+                # to just the report type and basis, and then reconstruct the full filename.
+                # Re-evaluating the file_suffix in FINANCIAL_REPORT_DEFINITIONS:
+                # It should be just the part after "LLC - " and before ".pdf"
+                # e.g., "Balance Sheet - 2024 - Cash Basis"
+                # So the file_suffix should be like "-Balance Sheet - Accrual Basis"
+                # And we insert the year.
+
+                # Let's assume the file_suffix is just the part after the entity name and before the year.
+                # This requires a slight adjustment to the FINANCIAL_REPORT_DEFINITIONS again.
+                # Given your file names: "AIM Laboratories LLC - Balance Sheet - 2024 - Cash Basis.pdf"
+                # The structure is: Entity Name + " - " + Report Type + " - " + Year + " - " + Basis + ".pdf"
+                # So, file_suffix should be like " - Balance Sheet - " + " - Cash Basis"
+                # This is getting complicated. Let's stick to the previous file_suffix structure
+                # and adjust the filename generation to insert the year.
+
+                # The simplest way to match your provided file names is to use the exact structure.
+                # The filename is: "{Entity Name} - {Report Type} - {Year} - {Basis}.pdf"
+                # So, the file_suffix should be just the report type and basis, and we assemble it.
+                
+                filename = f"{selected_entity} - {report_def['display_name_part']} - {year_val} - {report_def['basis']}.pdf"
+                
                 filepath_check = os.path.join('static', filename)
 
                 if os.path.exists(filepath_check): # Only add if the file actually exists in static folder
@@ -376,13 +414,15 @@ if __name__ == '__main__':
     # Create dummy PDF files for financial reports (entity-specific)
     for year_val in range(current_app_year - 2, current_app_year + 2):
         for entity in MASTER_ENTITIES:
-            entity_filename_safe = entity.replace(' ', '')
+            # For dummy file creation, we use the full entity name directly in the filename
+            # as per the user's example.
             for report_def in FINANCIAL_REPORT_DEFINITIONS:
                 if 'applicable_years' in report_def and year_val not in report_def['applicable_years']:
                     continue
 
-                # Construct the filename (e.g., "AIMLaboratoriesLLC_2024_BS_Cash.pdf")
-                filename_to_create = f"{entity_filename_safe}_{year_val}{report_def['file_suffix']}.pdf"
+                # Construct the filename exactly as provided by the user:
+                # "AIM Laboratories LLC - Balance Sheet - 2024 - Cash Basis.pdf"
+                filename_to_create = f"{entity} - {report_def['display_name_part']} - {year_val} - {report_def['basis']}.pdf"
                 filepath = os.path.join('static', filename_to_create)
                 
                 if not os.path.exists(filepath):
