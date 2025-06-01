@@ -103,7 +103,7 @@
 
         /* Styles for secondary logos */
         .secondary-logo-img {
-            max-width: 70px; /* Made a bit larger */
+            max-width: 110px; /* Made a bit larger (from 90px to 110px) */
             height: auto;
             opacity: 1.0;
         }
@@ -191,6 +191,7 @@
             <img src="{{ url_for('static', filename='statlabs.png') }}" alt="Stat Labs Logo" class="secondary-logo-img">
             <img src="{{ url_for('static', filename='FBG Logo.png') }}" alt="FBG Logo" class="secondary-logo-img">
             <img src="{{ url_for('static', filename='Enviro Labs.png') }}" alt="Enviro Labs Logo" class="secondary-logo-img">
+            <img src="{{ url_for('static', filename='Amico White.png') }}" alt="Amico White Logo" class="secondary-logo-img"> {# Added new logo #}
         </div>
         <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
     </nav>
@@ -246,5 +247,4 @@
     </div>
 </body>
 </html>
-
 
