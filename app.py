@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import re # Import the regular expression module
@@ -27,6 +27,8 @@ MASTER_ENTITIES = sorted([
 UNFILTERED_ACCESS_USERS = ['SatishD', 'AshlieT', 'MinaK', 'BobS']
 
 # --- User Management (In-memory, with individual names as usernames and their roles) ---
+# For Physician/Provider, the 'username' key will be an internal identifier,
+# and 'email' will be the primary login credential.
 users = {
     'SatishD': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES, 'role': 'business_dev_manager'}, # Example BDM
@@ -34,17 +36,19 @@ users = {
     'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': [e for e in MASTER_ENTITIES if e != 'Stat Labs'], 'role': 'business_dev_manager'}, # Example BDM
     'MinaK': {'password_hash': generate_password_hash('password5'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES, 'role': 'business_dev_manager'}, # Example BDM
-    'Andrew': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'physician_provider'}, # Example Physician/Provider
-    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'physician_provider'}, # Example Physician/Provider
-    'House': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'patient'}, # Example Patient
+    # Physician/Provider example with email login
+    'Andrew_Phys': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'physician_provider', 'email': 'andrew@example.com'},
+    'AndrewS_Phys': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'physician_provider', 'email': 'andrews@example.com'},
+    # Patient users now have specific details for login
+    'House_Patient': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'House', 'dob': '1980-05-15', 'ssn4': '1234'}},
+    'PatientUser1': {'password_hash': generate_password_hash('patientpass'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'Doe', 'dob': '1990-01-01', 'ssn4': '5678'}}, # Dedicated Patient User
     'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx LLC'], 'role': 'business_dev_manager'}, # Example BDM
-    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories LLC'], 'role': 'physician_provider'}, # Example Physician/Provider
+    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories LLC'], 'role': 'physician_provider', 'email': 'sonnya@example.com'}, # Example Physician/Provider
     'Omar': {'password_hash': generate_password_hash('password12'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Example Admin
     'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['AMICO Dx LLC'], 'role': 'business_dev_manager'}, # Example BDM
     'DarangT': {'password_hash': generate_password_hash('password14'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'BobS': {'password_hash': generate_password_hash('password15'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'PatientUser1': {'password_hash': generate_password_hash('patientpass'), 'entities': [], 'role': 'patient'}, # Dedicated Patient User
-    'PhysicianUser1': {'password_hash': generate_password_hash('physicianpass'), 'entities': ['First Bio Lab'], 'role': 'physician_provider'}, # Dedicated Physician User
+    'PhysicianUser1': {'password_hash': generate_password_hash('physicianpass'), 'entities': ['First Bio Lab'], 'role': 'physician_provider', 'email': 'physician1@example.com'}, # Dedicated Physician User
 }
 
 # --- Define Report Types by Role ---
@@ -107,7 +111,8 @@ def select_role():
             session['selected_role'] = selected_role
             return redirect(url_for('login'))
         else:
-            return render_template('role_selection.html', error="Invalid role selected.")
+            flash("Invalid role selected.", "error")
+            return render_template('role_selection.html')
     return render_template('role_selection.html')
 
 
@@ -119,21 +124,109 @@ def login():
     if 'selected_role' not in session:
         return redirect(url_for('select_role')) # Ensure a role is selected first
 
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        user_info = users.get(username) # Get user info from the flat dictionary
+    selected_role = session['selected_role']
+    error_message = None
 
-        # Check if user exists and if their role matches the selected session role
-        if user_info and user_info.get('role') == session['selected_role'] and check_password_hash(user_info['password_hash'], password):
-            session['username'] = username
-            return redirect(url_for('select_report'))
+    if request.method == 'POST':
+        if selected_role == 'patient':
+            # Patient login uses Last Name, DOB, SSN4
+            last_name = request.form.get('last_name')
+            dob = request.form.get('dob')
+            ssn4 = request.form.get('ssn4')
+
+            found_patient = False
+            for username_key, user_info in users.items(): # Iterate through users to find patient
+                if user_info.get('role') == 'patient':
+                    patient_details = user_info.get('patient_details')
+                    if patient_details and \
+                       patient_details['last_name'].lower() == last_name.lower() and \
+                       patient_details['dob'] == dob and \
+                       patient_details['ssn4'] == ssn4:
+                        session['username'] = username_key # Store the internal username for the session
+                        found_patient = True
+                        break
+            
+            if found_patient:
+                return redirect(url_for('select_report'))
+            else:
+                error_message = 'Invalid patient details.'
+        elif selected_role == 'physician_provider':
+            # Physician/Provider login uses Email and Password
+            email = request.form.get('email')
+            password = request.form.get('password')
+            
+            found_physician = False
+            for username_key, user_info in users.items(): # Iterate through users to find physician by email
+                if user_info.get('role') == 'physician_provider' and user_info.get('email') and user_info['email'].lower() == email.lower():
+                    if check_password_hash(user_info['password_hash'], password):
+                        session['username'] = username_key # Store the internal username for the session
+                        found_physician = True
+                        break
+            
+            if found_physician:
+                return redirect(url_for('select_report'))
+            else:
+                error_message = 'Invalid email or password.'
         else:
-            return render_template('login.html', error='Invalid username or password.'), 401
+            # Other roles (Business Dev Manager, Admin) use Username and Password
+            username = request.form.get('username')
+            password = request.form.get('password')
+            
+            user_info = users.get(username)
+
+            if user_info and user_info.get('role') == selected_role and check_password_hash(user_info['password_hash'], password):
+                session['username'] = username
+                return redirect(url_for('select_report'))
+            else:
+                error_message = 'Invalid username or password.'
     
-    # For GET request, render login form
-    return render_template('login.html')
+    # For GET request or failed POST, render login form with appropriate fields
+    return render_template('login.html', error=error_message, selected_role=selected_role)
+
+@app.route('/register_physician', methods=['GET', 'POST'])
+def register_physician():
+    if request.method == 'POST':
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+
+        # Basic validation
+        if not email or not password or not confirm_password:
+            flash("All fields are required.", "error")
+            return render_template('register_physician.html')
+        
+        if password != confirm_password:
+            flash("Passwords do not match.", "error")
+            return render_template('register_physician.html')
+        
+        # Check if email already exists for a physician
+        for username_key, user_info in users.items():
+            if user_info.get('role') == 'physician_provider' and user_info.get('email') and user_info['email'].lower() == email.lower():
+                flash("Email already registered. Please login or use a different email.", "error")
+                return render_template('register_physician.html')
+        
+        # Register the new physician
+        # Generate a unique username key (e.g., from email or a counter)
+        # For simplicity, let's use a sanitized version of the email as the username key
+        # In a real app, you'd use a UUID or auto-incrementing ID from a database.
+        new_username_key = email.replace('@', '_').replace('.', '_') + "_phys"
+        
+        # Ensure the generated username key is unique (simple check for demo)
+        while new_username_key in users:
+            new_username_key += "_new" # Append to make it unique if collision occurs
+
+        users[new_username_key] = {
+            'password_hash': generate_password_hash(password),
+            'entities': [], # Newly registered physicians start with no specific entities, can be assigned later
+            'role': 'physician_provider',
+            'email': email.lower()
+        }
+        
+        flash("Registration successful! You can now log in.", "success")
+        return redirect(url_for('login'))
+
+    return render_template('register_physician.html')
+
 
 @app.route('/select_report', methods=['GET', 'POST'])
 def select_report():
@@ -172,33 +265,32 @@ def select_report():
         selected_year = request.form.get('year')
 
         if not report_type:
+            flash("Please select a report type.", "error")
             return render_template(
                 'select_report.html',
                 master_entities=display_entities,
                 available_report_types=available_report_types,
                 months=months,
-                years=years,
-                error="Please select a report type."
+                years=years
             )
         
         # For 'patient' role, entity selection might not be relevant or might be pre-defined
         if user_role == 'patient' and not selected_entity:
-            # Patients might not select an entity, or their entity is auto-assigned
-            # For now, let's allow them to proceed without entity selection
-            selected_entity = None # Or set to a default if needed
+            selected_entity = None # Allow patients to proceed without entity selection
         elif not selected_entity and user_role != 'patient':
+            flash("Please select an entity.", "error")
             return render_template(
                 'select_report.html',
                 master_entities=display_entities,
                 available_report_types=available_report_types,
                 months=months,
-                years=years,
-                error="Please select an entity."
+                years=years
             )
 
         # Authorization check: Ensure the selected entity is one the user is authorized for
         # Admins bypass this specific entity authorization check
         if user_role != 'admin' and selected_entity and selected_entity not in user_authorized_entities:
+            flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity.", "error")
             return render_template(
                 'unauthorized.html',
                 message=f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity."
@@ -266,17 +358,18 @@ def dashboard():
     # Authorization check for selected entity (admins bypass specific entity auth)
     if user_role != 'admin' and selected_entity and selected_entity not in user_authorized_entities:
         if not user_authorized_entities and user_role != 'patient': # Patients might not have entities
+             flash(f"You do not have any entities assigned to view reports. Please contact support.", "error")
              return render_template(
                 'unauthorized.html',
                 message=f"You do not have any entities assigned to view reports. Please contact support."
             )
+        flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for.", "error")
         return render_template(
             'select_report.html',
             master_entities=display_entities,
             available_report_types=REPORT_TYPES_BY_ROLE.get(user_role, []),
             months=months,
-            years=years,
-            error=f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for."
+            years=years
         )
 
     filtered_data = pd.DataFrame()
@@ -373,8 +466,6 @@ def dashboard():
             message=f"Marketing Material for {selected_entity} is under development."
         )
     elif report_type == 'patient_reports': # New report type handler
-        # For patient reports, you might filter data differently, e.g., by 'patient_id'
-        # For now, it will show a generic message.
         return render_template(
             'generic_report.html',
             report_title="Patient Specific Reports",
@@ -414,13 +505,13 @@ if __name__ == '__main__':
     if not os.path.exists('data.csv'):
         dummy_data = {
             'Date': [
-                '2025-03-12', '2025-03-15', '2025-03-18', '2025-03-20', '2025-03-22',
-                '2025-04-01', '2025-04-05', '2025-04-10', '2025-04-15',
-                '2025-02-01', '2025-02-05',
-                '2025-03-25', '2025-03-28', '2025-03-30',
-                '2025-04-20', '2025-04-22',
-                '2025-02-01',
-                '2025-03-01'
+                '2025-03-12', '2025-03-15', '2025-03-18', '2025-03-20', '2025-03-22', # March 2025 data
+                '2025-04-01', '2025-04-05', '2025-04-10', '2025-04-15', # April 2025 data
+                '2025-02-01', '2025-02-05', # February 2025 data
+                '2025-03-25', '2025-03-28', '2025-03-30', # More March data
+                '2025-04-20', '2025-04-22', # More April data
+                '2025-02-01', # Specific row for AndrewS bonus report test
+                '2025-03-01' # New row for multi-user test
             ],
             'Location': [
                 'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
@@ -429,8 +520,8 @@ if __name__ == '__main__':
                 'OLD LOCATION X', 'OLD LOCATION Y',
                 'NEW CLINIC Z', 'URGENT CARE A', 'HOSPITAL B',
                 'HEALTH CENTER C', 'WELLNESS SPA D',
-                'BETA TEST LOCATION',
-                'SHARED PERFORMANCE CLINIC'
+                'BETA TEST LOCATION', # Specific row for AndrewS bonus report test
+                'SHARED PERFORMANCE CLINIC' # New row for multi-user test
             ],
             'Reimbursement': [1.98, 150.49, 805.13, 2466.87, 76542.07,
                               500.00, 750.00, 120.00, 900.00,
@@ -438,28 +529,28 @@ if __name__ == '__main__':
                               600.00, 150.00, 2500.00,
                               350.00, 80.00,
                               38.85,
-                              1200.00],
+                              1200.00], # New row for multi-user test
             'COGS': [50.00, 151.64, 250.00, 1950.00, 30725.00,
                      200.00, 300.00, 50.00, 400.00,
                      100.00, 150.00,
                      250.00, 70.00, 1800.00,
                      120.00, 30.00,
                      25.00,
-                     500.00],
+                     500.00], # New row for multi-user test
             'Net': [-48.02, -1.15, 555.13, 516.87, 45817.07,
                                300.00, 450.00, 70.00, 500.00,
                                200.00, 300.00,
                                350.00, 80.00, 700.00,
                                230.00, 50.00,
                                13.85,
-                               700.00],
+                               700.00], # New row for multi-user test
             'Commission': [-14.40, -0.34, 166.53, 155.06, 13745.12,
                                90.00, 135.00, 21.00, 150.00,
                                60.00, 90.00,
                                105.00, 24.00, 210.00,
                                69.00, 15.00,
                                4.16,
-                               210.00],
+                               210.00], # New row for multi-user test
             'Entity': [
                 'AIM Laboratories LLC', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx LLC', 'Enviro Labs LLC',
                 'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Genetics LLC', 'Stat Labs',
@@ -469,23 +560,23 @@ if __name__ == '__main__':
                 'AIM Laboratories LLC',
                 'First Bio Lab'
             ],
-            'Associated Rep Name': [
+            'Associated Rep Name': [ # This is for display in the table
                 'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
                 'Satish D', 'ACG', 'Melinda C', 'Mina K',
                 'Vince O', 'Nick C',
                 'Ashlie T', 'Omar', 'Darang T',
                 'Andrew', 'Jay M',
-                'Andrew S',
-                'Andrew S, Melinda C'
+                'Andrew S', # Specific row for AndrewS bonus report test
+                'Andrew S, Melinda C' # New row for multi-user test
             ],
-            'Username': [
-                'House', 'House', 'SonnyA', 'JayM', 'BobS',
+            'Username': [ # NEW COLUMN - For filtering, must match login username
+                'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
                 'SatishD', 'ACG', 'MelindaC', 'MinaK',
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
-                'Andrew', 'JayM',
-                'AndrewS',
-                'AndrewS,MelindaC'
+                'Andrew_Phys', 'JayM',
+                'AndrewS_Phys', # Matches AndrewS login username
+                'AndrewS_Phys,MelindaC' # Allows both AndrewS and MelindaC to see this line
             ]
         }
         dummy_df = pd.DataFrame(dummy_data)
