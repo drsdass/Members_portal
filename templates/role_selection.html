@@ -6,28 +6,71 @@
     <title>Select Your Role</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .role-container {
+            background-color: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            width: 90%;
+            max-width: 500px;
+        }
+        h1 {
+            color: #0056b3;
+            margin-bottom: 30px;
+            font-size: 2.2em;
+        }
+        .button-group {
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically */
+            gap: 15px; /* Space between buttons */
+            margin-top: 20px;
+        }
+        .role-button {
+            background-color: #007bff;
+            color: white;
+            padding: 15px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+            width: 100%; /* Make buttons full width */
+        }
+        .role-button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+        .error-message {
+            color: #dc3545;
+            margin-top: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
-        <h2 class="text-3xl font-bold text-gray-800 mb-6">Welcome! Please Select Your Role</h2>
-        {% if error %}
-            <p class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">{{ error }}</p>
-        {% endif %}
-        <form action="{{ url_for('select_role') }}" method="post" class="space-y-4">
-            <button type="submit" name="role" value="members"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                Members
-            </button>
-            <button type="submit" name="role" value="sales_marketing"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
-                Sales & Marketing
-            </button>
+<body>
+    <div class="role-container">
+        <h1>Welcome! Please Select Your Role</h1>
+        <form action="{{ url_for('select_role') }}" method="POST">
+            <div class="button-group">
+                <button type="submit" name="role" value="physician_provider" class="role-button">Physician/Provider</button>
+                <button type="submit" name="role" value="patient" class="role-button">Patient</button>
+                <button type="submit" name="role" value="business_dev_manager" class="role-button">Business Development Manager</button>
+                <button type="submit" name="role" value="admin" class="role-button">Admin</button>
+            </div>
+            {% if error %}
+                <p class="error-message">{{ error }}</p>
+            {% endif %}
         </form>
-        <div class="mt-6">
-            <a href="{{ url_for('logout') }}" class="text-gray-600 hover:underline">Logout</a>
-        </div>
     </div>
 </body>
 </html>
