@@ -14,11 +14,11 @@ app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_
 # --- Master List of All Entities (RESTRICTED to the 7 core company/lab entities, updated with LLC) ---
 MASTER_ENTITIES = sorted([
     'First Bio Lab',
-    'First Bio Genetics LLC', # Updated
+    'First Bio Genetics LLC', # Updated based on file names
     'First Bio Lab of Illinois',
-    'AIM Laboratories LLC',   # Updated
-    'AMICO Dx LLC',           # Updated
-    'Enviro Labs LLC',        # Updated
+    'AIM Laboratories LLC',   # Updated based on file names
+    'AMICO Dx LLC',           # Updated based on file names
+    'Enviro Labs LLC',        # Updated based on file names
     'Stat Labs'
 ])
 
@@ -68,11 +68,8 @@ FINANCIAL_REPORT_DEFINITIONS = [
     {'display_name_part': 'Profit and Loss account', 'basis': 'Cash Basis', 'file_suffix': '-Profit and Loss account - Cash Basis'},
     {'display_name_part': 'Balance Sheet', 'basis': 'Accrual Basis', 'file_suffix': '-Balance Sheet - Accrual Basis'},
     {'display_name_part': 'Balance Sheet', 'basis': 'Cash Basis', 'file_suffix': '-Balance Sheet - Cash Basis'},
-    # Add other report types if they have specific basis (e.g., Annual, YTD)
-    # For now, assuming Annual/YTD might be general or need specific basis defined later
-    # {'display_name_part': 'Annual Report', 'basis': 'Accrual Basis', 'file_suffix': '-Annual Report - Accrual Basis'},
-    # {'display_name_part': 'Annual Report', 'basis': 'Cash Basis', 'file_suffix': '-Annual Report - Cash Basis'},
-    # {'display_name_part': 'YTD Report', 'basis': 'Cash Basis', 'file_suffix': '-YTD Report - Cash Basis', 'applicable_years': [2025]}
+    # New report added as per user request
+    {'display_name_part': 'YTD Management Report', 'basis': 'Cash Basis', 'file_suffix': '-YTD Management Report - Cash Basis', 'applicable_years': [2025]}
 ]
 
 
@@ -280,8 +277,6 @@ def dashboard():
             # Ensure 'Username' column is treated as string for .str methods
             filtered_data['Username'] = filtered_data['Username'].astype(str)
 
-            # Updated logic: Check if the normalized_username is contained within the (potentially comma-separated) Username string
-            # Using regex for word boundaries to avoid partial matches (e.g., 'and' matching 'andrewS')
             regex_pattern = r'\b' + re.escape(normalized_username) + r'\b'
             filtered_data = filtered_data[
                 filtered_data['Username'].str.strip().str.lower().str.contains(regex_pattern, na=False)
@@ -290,7 +285,6 @@ def dashboard():
     else:
         print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
 
-    # --- Financial Reports Logic (Now dynamically generates names and looks for entity-specific files) ---
     if report_type == 'financials':
         files_to_display = {}
         
@@ -328,7 +322,8 @@ def dashboard():
             files=files_to_display, # Pass the structured files data
             master_entities=[entity for entity in MASTER_ENTITIES if entity in user_authorized_entities], # Only authorized entities for this user
             years=years, # Years dropdown for financials
-            selected_year=selected_year
+            selected_year=selected_year,
+            months=months # Pass months for display in dashboard if needed
         )
     # --- Other Report Types Logic (remains the same) ---
     elif report_type == 'monthly_bonus':
@@ -394,13 +389,13 @@ if __name__ == '__main__':
     if not os.path.exists('data.csv'):
         dummy_data = {
             'Date': [
-                '2025-03-12', '2025-03-15', '2025-03-18', '2025-03-20', '2025-03-22',
-                '2025-04-01', '2025-04-05', '2025-04-10', '2025-04-15',
-                '2025-02-01', '2025-02-05',
-                '2025-03-25', '2025-03-28', '2025-03-30',
-                '2025-04-20', '2025-04-22',
-                '2025-02-01',
-                '2025-03-01'
+                '2025-03-12', '2025-03-15', '2025-03-18', '2025-03-20', '2025-03-22', # March 2025 data
+                '2025-04-01', '2025-04-05', '2025-04-10', '2025-04-15', # April 2025 data
+                '2025-02-01', '2025-02-05', # February 2025 data
+                '2025-03-25', '2025-03-28', '2025-03-30', # More March data
+                '2025-04-20', '2025-04-22', # More April data
+                '2025-02-01', # Specific row for AndrewS bonus report test
+                '2025-03-01' # New row for multi-user test
             ],
             'Location': [
                 'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
@@ -409,8 +404,8 @@ if __name__ == '__main__':
                 'OLD LOCATION X', 'OLD LOCATION Y',
                 'NEW CLINIC Z', 'URGENT CARE A', 'HOSPITAL B',
                 'HEALTH CENTER C', 'WELLNESS SPA D',
-                'BETA TEST LOCATION',
-                'SHARED PERFORMANCE CLINIC'
+                'BETA TEST LOCATION', # Specific row for AndrewS bonus report test
+                'SHARED PERFORMANCE CLINIC' # New row for multi-user test
             ],
             'Reimbursement': [1.98, 150.49, 805.13, 2466.87, 76542.07,
                               500.00, 750.00, 120.00, 900.00,
@@ -418,28 +413,28 @@ if __name__ == '__main__':
                               600.00, 150.00, 2500.00,
                               350.00, 80.00,
                               38.85,
-                              1200.00],
+                              1200.00], # New row for multi-user test
             'COGS': [50.00, 151.64, 250.00, 1950.00, 30725.00,
                      200.00, 300.00, 50.00, 400.00,
                      100.00, 150.00,
                      250.00, 70.00, 1800.00,
                      120.00, 30.00,
                      25.00,
-                     500.00],
+                     500.00], # New row for multi-user test
             'Net': [-48.02, -1.15, 555.13, 516.87, 45817.07,
                                300.00, 450.00, 70.00, 500.00,
                                200.00, 300.00,
                                350.00, 80.00, 700.00,
                                230.00, 50.00,
                                13.85,
-                               700.00],
+                               700.00], # New row for multi-user test
             'Commission': [-14.40, -0.34, 166.53, 155.06, 13745.12,
                                90.00, 135.00, 21.00, 150.00,
                                60.00, 90.00,
                                105.00, 24.00, 210.00,
                                69.00, 15.00,
                                4.16,
-                               210.00],
+                               210.00], # New row for multi-user test
             'Entity': [
                 'AIM Laboratories LLC', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx LLC', 'Enviro Labs LLC',
                 'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Genetics LLC', 'Stat Labs',
@@ -449,23 +444,23 @@ if __name__ == '__main__':
                 'AIM Laboratories LLC',
                 'First Bio Lab'
             ],
-            'Associated Rep Name': [
+            'Associated Rep Name': [ # This is for display in the table
                 'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
                 'Satish D', 'ACG', 'Melinda C', 'Mina K',
                 'Vince O', 'Nick C',
                 'Ashlie T', 'Omar', 'Darang T',
                 'Andrew', 'Jay M',
-                'Andrew S',
-                'Andrew S, Melinda C'
+                'Andrew S', # Specific row for AndrewS bonus report test
+                'Andrew S, Melinda C' # New row for multi-user test
             ],
-            'Username': [
+            'Username': [ # NEW COLUMN - For filtering, must match login username
                 'House', 'House', 'SonnyA', 'JayM', 'BobS',
                 'SatishD', 'ACG', 'MelindaC', 'MinaK',
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
                 'Andrew', 'JayM',
-                'AndrewS',
-                'AndrewS,MelindaC'
+                'AndrewS', # Matches AndrewS login username
+                'AndrewS,MelindaC' # Allows both AndrewS and MelindaC to see this line
             ]
         }
         dummy_df = pd.DataFrame(dummy_data)
