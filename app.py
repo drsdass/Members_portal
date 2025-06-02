@@ -290,12 +290,12 @@ def select_report():
         return redirect(url_for('login'))
 
     username = session['username']
-    user_authorized_entities = users[username]['entities']
+    user_role = users[username]['role'] # FIXED: Define user_role here at the start
 
     if user_role == 'patient':
         return redirect(url_for('patient_results'))
 
-    # Admin entity display is now controlled solely by their 'entities' list
+    user_authorized_entities = users[username]['entities']
     display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
 
 
@@ -319,28 +319,26 @@ def select_report():
         selected_year = request.form.get('year')
 
         if not report_type or not selected_entity:
+            flash("Please select both a report type and an entity.", "error") # Changed to flash for better UX
             return render_template(
                 'select_report.html',
-                master_entities=display_entities, # Use display_entities here
+                master_entities=display_entities,
                 available_report_types=available_report_types,
                 months=months,
-                years=years,
-                error="Please select both a report type and an entity."
+                years=years
             )
         
         if selected_entity not in user_authorized_entities:
             if not user_authorized_entities:
-                return render_template(
-                    'unauthorized.html',
-                    message=f"You do not have any entities assigned to view reports. Please contact support."
-                )
+                flash("You do not have any entities assigned to view reports. Please contact support.", "error") # Changed to flash
+                return render_template('unauthorized.html', message="You do not have any entities assigned to view reports. Please contact support.")
+            flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for.", "error") # Changed to flash
             return render_template(
                 'select_report.html',
-                master_entities=display_entities, # Use display_entities here
+                master_entities=display_entities,
                 available_report_types=available_report_types,
                 months=months,
-                years=years,
-                error=f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for."
+                years=years
             )
         
         # Store selections in session
@@ -352,25 +350,22 @@ def select_report():
         return redirect(url_for('dashboard'))
     
     # For GET request, display the selection form
-    user_role = users[username]['role'] # Define user_role here for GET request
-    available_report_types = REPORT_TYPES_BY_ROLE.get(user_role, [])
     return render_template(
         'select_report.html',
-        master_entities=display_entities, # Use display_entities here
+        master_entities=display_entities,
         available_report_types=available_report_types,
         months=months,
         years=years
     )
 
-@app.route('/dashboard', methods=['GET', 'POST']) # Allow POST requests to dashboard
+@app.route('/dashboard', methods=['GET', 'POST'])
 def dashboard():
     if 'username' not in session:
         return redirect(url_for('login'))
 
     rep = session['username']
-    user_role = users[rep]['role'] # Define user_role here
+    user_role = users[rep]['role']
     
-    # Define months and years for dropdowns (needed for monthly_bonus.html as well)
     months = [
         {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
         {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
@@ -380,59 +375,53 @@ def dashboard():
         {'value': 11, 'name': 'November'}, {'value': 12, 'name': 'December'}
     ]
     current_year = datetime.datetime.now().year
-    years = list(range(current_year - 2, current_year + 2)) # e.g., 2023, 2024, 2025, 2026
+    years = list(range(current_year - 2, current_year + 2))
 
     if request.method == 'POST':
-        # If coming from a form submission on monthly_bonus.html or dashboard.html
         selected_entity = request.form.get('entity_name')
         report_type = request.form.get('report_type')
         selected_month = int(request.form.get('month')) if request.form.get('month') else None
         selected_year = int(request.form.get('year')) if request.form.get('year') else None
 
-        # Update session with new selections
         session['selected_entity'] = selected_entity
         session['selected_month'] = selected_month
         session['selected_year'] = selected_year
         session['report_type'] = report_type
     else:
-        # If coming from initial redirect from select_report or direct GET
         selected_entity = session.get('selected_entity')
         report_type = session.get('report_type')
         selected_month = session.get('selected_month')
         selected_year = session.get('selected_year')
 
-    # Authorization check for selected entity
     user_authorized_entities = users[rep]['entities']
-    # display_entities for the dropdowns on the dashboard page
     display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
 
-    if selected_entity not in user_authorized_entities:
+
+    if selected_entity and selected_entity not in user_authorized_entities:
         if not user_authorized_entities:
-             return render_template(
-                'unauthorized.html',
-                message=f"You do not have any entities assigned to view reports. Please contact support."
-            )
+             flash("You do not have any entities assigned to view reports. Please contact support.", "error")
+             return render_template('unauthorized.html', message="You do not have any entities assigned to view reports. Please contact support.")
+        flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity.", "error")
         return render_template(
-            'select_report.html', # Redirect back to selection if not authorized for entity
-            master_entities=display_entities, # Use display_entities here
+            'select_report.html',
+            master_entities=display_entities,
             available_report_types=REPORT_TYPES_BY_ROLE.get(user_role, []),
             months=months,
-            years=years,
-            error=f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for."
+            years=years
         )
 
 
     filtered_data = pd.DataFrame()
 
-    # Data filtering logic
-    # The UNFILTERED_ACCESS_USERS still gives full data for monthly bonus for these specific users
     if rep in UNFILTERED_ACCESS_USERS:
         if not df.empty:
-            filtered_data = df.copy() # Provide a copy of the entire DataFrame
+            filtered_data = df.copy()
         print(f"User {rep} has unfiltered access. Displaying all data.")
     elif not df.empty and 'Entity' in df.columns:
-        # Existing filtering logic for other users
-        filtered_data = df[df['Entity'] == selected_entity].copy()
+        if selected_entity:
+            filtered_data = df[df['Entity'] == selected_entity].copy()
+        else:
+            filtered_data = df.copy()
 
         if selected_month and selected_year and 'Date' in filtered_data.columns:
             if not pd.api.types.is_datetime64_any_dtype(filtered_data['Date']):
@@ -443,15 +432,9 @@ def dashboard():
                 (filtered_data['Date'].dt.year == selected_year)
             ]
         
-        # NEW FILTERING FOR MONTHLY BONUS REPORTS: Filter by 'Username' column for non-unfiltered users
-        if report_type == 'monthly_bonus' and 'Username' in filtered_data.columns: # Changed to 'Username'
+        if report_type == 'monthly_bonus' and 'Username' in filtered_data.columns:
             normalized_username = rep.strip().lower()
-            
-            # Ensure 'Username' column is treated as string for .str methods
             filtered_data['Username'] = filtered_data['Username'].astype(str)
-
-            # Updated logic: Check if the normalized_username is contained within the (potentially comma-separated) Username string
-            # Using regex for word boundaries to avoid partial matches (e.g., 'and' matching 'andrewS')
             regex_pattern = r'\b' + re.escape(normalized_username) + r'\b'
             filtered_data = filtered_data[
                 filtered_data['Username'].str.strip().str.lower().str.contains(regex_pattern, na=False)
@@ -461,14 +444,13 @@ def dashboard():
         print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
 
     if report_type == 'financials':
-        files_to_display = {} # Initialize dictionary to hold reports by year
+        files_to_display = {}
         
         years_to_process = [selected_year] if selected_year else range(current_year - 2, current_year + 2)
 
         for year_val in years_to_process:
             year_reports = []
             for report_def in FINANCIAL_REPORT_DEFINITIONS:
-                # Check for applicable_years if defined in report_def
                 if 'applicable_years' in report_def and year_val not in report_def['applicable_years']:
                     continue
 
@@ -489,10 +471,11 @@ def dashboard():
             rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
-            files=files_to_display, # Pass the dictionary of files
-            master_entities=display_entities, # Pass authorized entities for dropdown
-            years=years, # Pass years for dropdown
-            selected_year=selected_year # Pass selected year for dropdown
+            files=files_to_display,
+            master_entities=display_entities,
+            years=years,
+            selected_year=selected_year,
+            months=months
         )
     elif report_type == 'monthly_bonus':
         return render_template(
@@ -501,13 +484,26 @@ def dashboard():
             rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
-            # NEW: Pass necessary data for dropdowns
-            master_entities=display_entities, # Only authorized entities for this user
+            master_entities=display_entities,
             months=months,
             years=years,
             selected_month=selected_month,
             selected_year=selected_year
         )
+    elif report_type == 'requisitions':
+        return render_template(
+            'generic_report.html',
+            report_title="Requisitions Report",
+            message=f"Requisitions report for {selected_entity} is under development. Filtered data rows: {len(filtered_data)}"
+        )
+    elif report_type == 'marketing_material':
+        return render_template(
+            'generic_report.html',
+            report_title="Marketing Material Report",
+            message=f"Marketing Material for {selected_entity} is under development."
+        )
+    elif report_type == 'patient_reports':
+        return redirect(url_for('patient_results'))
     else:
         return redirect(url_for('select_report'))
 
@@ -516,7 +512,7 @@ def logout():
     session.clear()
     return redirect(url_for('login'))
 
-# --- Run the application ---
+# --- Run the application and create dummy files ---
 if __name__ == '__main__':
     if not os.path.exists('static'):
         os.makedirs('static')
