@@ -16,13 +16,21 @@
             <p class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">{{ error }}</p>
         {% endif %}
         <form action="{{ url_for('select_role') }}" method="post" class="space-y-4">
-            <button type="submit" name="role" value="members"
+            <button type="submit" name="role" value="physician_provider"
                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                Members
+                Physician/Provider
             </button>
-            <button type="submit" name="role" value="sales_marketing"
+            <button type="submit" name="role" value="patient"
                     class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
-                Sales & Marketing
+                Patient
+            </button>
+            <button type="submit" name="role" value="business_dev_manager"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition duration-150 ease-in-out">
+                Business Development Manager
+            </button>
+            <button type="submit" name="role" value="admin"
+                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition duration-150 ease-in-out">
+                Admin
             </button>
         </form>
         <div class="mt-6">
