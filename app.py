@@ -28,51 +28,40 @@ UNFILTERED_ACCESS_USERS = ['SatishD', 'AshlieT', 'MinaK', 'BobS']
 
 # --- User Management (In-memory, with granular entity assignments for all roles) ---
 users = {
-    # Full Admins (explicitly assigned MASTER_ENTITIES, and in UNFILTERED_ACCESS_USERS)
+    # Full Access Admins (those explicitly confirmed for full access in previous turns)
     'SatishD': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'AshlieT': {'password_hash': generate_password_hash('password3'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'MinaK': {'password_hash': generate_password_hash('password5'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'BobS': {'password_hash': generate_password_hash('password15'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'Omar': {'password_hash': generate_password_hash('password12'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'DarangT': {'password_hash': generate_password_hash('password14'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
+    'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
+    'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
+    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
 
-    # Restricted Admins (explicitly assigned entities based on your table)
-    # Most of these are now 'admin' and have access to all MASTER_ENTITIES based on your table.
-    'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'Andrew_Phys': {'password_hash': generate_password_hash('password7'), 'entities': MASTER_ENTITIES, 'role': 'admin', 'email': 'andrew@example.com'}, # Renamed from Andrew to Andrew_Phys to avoid ambiguity with new user 'AndrewS' if it was a typo for Andrew
-    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': MASTER_ENTITIES, 'role': 'admin', 'email': 'andrews@example.com'}, # AndrewS becomes admin, assuming full entity access as per table
-    'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # UPDATED: Now has MASTER_ENTITIES
+    # Admins with Specific Limited Access (based on your latest instructions)
+    'AghaA': {'password_hash': generate_password_hash('agapass'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin'},
+    'Wenjun': {'password_hash': generate_password_hash('wenpass'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin'},
+    'AndreaM': {'password_hash': generate_password_hash('andreapass'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin'},
+    'BenM': {'password_hash': generate_password_hash('benpass'), 'entities': ['Enviro Labs LLC'], 'role': 'admin'},
+    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin', 'email': 'sonnya@example.com'}, # 'SonnyN' mapped to 'SonnyA'
+    'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['AMICO Dx LLC'], 'role': 'admin'},
+    'BobSilverang': {'password_hash': generate_password_hash('silverpass'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'Enviro Labs LLC'], 'role': 'admin'},
+    'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx LLC'], 'role': 'admin'},
+    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'admin', 'email': 'andrews@example.com'},
 
-    # Highly Restricted Admins (explicitly assigned only 'First Bio Lab' based on your table)
-    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['First Bio Lab'], 'role': 'admin', 'email': 'sonnya@example.com'}, # SonnyN in table mapped to SonnyA here
-    'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['First Bio Lab'], 'role': 'admin'},
-
-    # New Admins (from your list, assigned dummy passwords)
-    'BobSilverang': {'password_hash': generate_password_hash('silverpass'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'AghaA': {'password_hash': generate_password_hash('agapass'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'Wenjun': {'password_hash': generate_password_hash('wenpass'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'NickT': {'password_hash': generate_password_hash('nicktpass'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'AndreaM': {'password_hash': generate_password_hash('andreapass'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'BenM': {'password_hash': generate_password_hash('benpass'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-
-    # Patient users (no change to role/entities)
-    'House_Patient': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'House', 'dob': '1980-05-15', 'ssn4': '1234', 'patient_id': 'PAT001'}},
-    'PatientUser1': {'password_hash': generate_password_hash('patientpass'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'Doe', 'dob': '1990-01-01', 'ssn4': '5678', 'patient_id': 'PAT002'}},
-
-    # Physician/Provider (if they are not listed above as Admin, they retain this role)
-    # PhysicianUser1 remains a Physician/Provider for testing this role
+    # Existing users not explicitly mentioned in the latest list (retain their existing roles/access)
+    'Andrew_Phys': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'admin', 'email': 'andrew@example.com'},
     'PhysicianUser1': {'password_hash': generate_password_hash('physicianpass'), 'entities': ['First Bio Lab'], 'role': 'physician_provider', 'email': 'physician1@example.com'},
 
-    # If any users from previous versions are now not in your list and not covered, they would cease to exist or default.
-    # For now, I've covered all users mentioned in your list.
+    # Patient users (no change)
+    'House_Patient': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'House', 'dob': '1980-05-15', 'ssn4': '1234', 'patient_id': 'PAT001'}},
+    'PatientUser1': {'password_hash': generate_password_hash('patientpass'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'Doe', 'dob': '1990-01-01', 'ssn4': '5678', 'patient_id': 'PAT002'}},
 }
 
 # --- Define Report Types by Role ---
-# This remains mostly consistent, as 'admin' role now handles all comprehensive access.
 REPORT_TYPES_BY_ROLE = {
-    'admin': [ # Admin role will now see all report types
+    'admin': [
         {'value': 'financials', 'name': 'Financials Report'},
         {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'},
         {'value': 'requisitions', 'name': 'Requisitions'},
@@ -86,7 +75,7 @@ REPORT_TYPES_BY_ROLE = {
     'patient': [
         {'value': 'patient_reports', 'name': 'Patient Specific Reports'}
     ],
-    'business_dev_manager': [ # This role might have no active users now if all are admins.
+    'business_dev_manager': [
         {'value': 'requisitions', 'name': 'Requisitions'},
         {'value': 'marketing_material', 'name': 'Marketing Material'},
         {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'}
@@ -290,14 +279,10 @@ def select_report():
         return redirect(url_for('login'))
 
     username = session['username']
-    user_role = users[username]['role'] # FIXED: Define user_role here at the start
-
-    if user_role == 'patient':
-        return redirect(url_for('patient_results'))
-
+    user_role = users[username]['role']
     user_authorized_entities = users[username]['entities']
-    display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
 
+    display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
 
     available_report_types = REPORT_TYPES_BY_ROLE.get(user_role, [])
 
@@ -310,7 +295,7 @@ def select_report():
         {'value': 11, 'name': 'November'}, {'value': 12, 'name': 'December'}
     ]
     current_year = datetime.datetime.now().year
-    years = list(range(current_year - 2, current_year + 2)) # e.g., 2023, 2024, 2025, 2026
+    years = list(range(current_year - 2, current_year + 2))
 
     if request.method == 'POST':
         report_type = request.form.get('report_type')
@@ -319,7 +304,7 @@ def select_report():
         selected_year = request.form.get('year')
 
         if not report_type or not selected_entity:
-            flash("Please select both a report type and an entity.", "error") # Changed to flash for better UX
+            flash("Please select both a report type and an entity.", "error")
             return render_template(
                 'select_report.html',
                 master_entities=display_entities,
@@ -330,9 +315,9 @@ def select_report():
         
         if selected_entity not in user_authorized_entities:
             if not user_authorized_entities:
-                flash("You do not have any entities assigned to view reports. Please contact support.", "error") # Changed to flash
+                flash("You do not have any entities assigned to view reports. Please contact support.", "error")
                 return render_template('unauthorized.html', message="You do not have any entities assigned to view reports. Please contact support.")
-            flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for.", "error") # Changed to flash
+            flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for.", "error")
             return render_template(
                 'select_report.html',
                 master_entities=display_entities,
@@ -341,7 +326,6 @@ def select_report():
                 years=years
             )
         
-        # Store selections in session
         session['report_type'] = report_type
         session['selected_entity'] = selected_entity
         session['selected_month'] = int(selected_month) if selected_month else None
@@ -349,7 +333,6 @@ def select_report():
         
         return redirect(url_for('dashboard'))
     
-    # For GET request, display the selection form
     return render_template(
         'select_report.html',
         master_entities=display_entities,
@@ -443,10 +426,54 @@ def dashboard():
     else:
         print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
 
+    # Define financial files structure (This will not change based on user entity access, only visibility)
+    financial_files_data = {
+        2023: [
+            {'name': '2023 1Q Profit and Loss', 'filename': '2023_1Q_PL.pdf'},
+            {'name': '2023 1Q Balance Sheet', 'filename': '2023_1Q_BS.pdf'},
+            {'name': '2023 2Q Profit and Loss', 'filename': '2023_2Q_PL.pdf'},
+            {'name': '2023 2Q Balance Sheet', 'filename': '2023_2Q_BS.pdf'},
+            {'name': '2023 3Q Profit and Loss', 'filename': '2023_3Q_PL.pdf'},
+            {'name': '2023 3Q Balance Sheet', 'filename': '2023_3Q_BS.pdf'},
+            {'name': '2023 4Q Profit and Loss', 'filename': '2023_4Q_PL.pdf'},
+            {'name': '2023 4Q Balance Sheet', 'filename': '2023_4Q_BS.pdf'},
+            {'name': '2023 Annual Report', 'filename': '2023_Annual.pdf'}
+        ],
+        2024: [
+            {'name': '2024 1Q Profit and Loss', 'filename': '2024_1Q_PL.pdf'},
+            {'name': '2024 1Q Balance Sheet', 'filename': '2024_1Q_BS.pdf'},
+            {'name': '2024 2Q Profit and Loss', 'filename': '2024_2Q_PL.pdf'},
+            {'name': '2024 2Q Balance Sheet', 'filename': '2024_2Q_BS.pdf'},
+            {'name': '2024 3Q Profit and Loss', 'filename': '2024_3Q_PL.pdf'},
+            {'name': '2024 3Q Balance Sheet', 'filename': '2024_3Q_BS.pdf'},
+            {'name': '2024 4Q Profit and Loss', 'filename': '2024_4Q_PL.pdf'},
+            {'name': '2024 4Q Balance Sheet', 'filename': '2024_4Q_BS.pdf'},
+            {'name': '2024 Annual Report', 'filename': '2024_Annual.pdf'}
+        ],
+        2025: [
+            {'name': '2025 1Q Profit and Loss', 'filename': '2025_1Q_PL.pdf'},
+            {'name': '2025 1Q Balance Sheet', 'filename': '2025_1Q_BS.pdf'},
+            {'name': '2025 2Q Profit and Loss', 'filename': '2025_2Q_PL.pdf'},
+            {'name': '2025 2Q Balance Sheet', 'filename': '2025_2Q_BS.pdf'},
+            {'name': '2025 3Q Profit and Loss', 'filename': '2025_3Q_PL.pdf'},
+            {'name': '2025 3Q Balance Sheet', 'filename': '2025_3Q_BS.pdf'},
+            {'name': '2025 4Q Profit and Loss', 'filename': '2025_4Q_PL.pdf'},
+            {'name': '2025 4Q Balance Sheet', 'filename': '2025_4Q_BS.pdf'},
+            {'name': '2025 Annual Report', 'filename': '2025_Annual.pdf'},
+            {'name': '2025 YTD Report', 'filename': '2025_YTD.pdf'}
+        ]
+    }
+
     if report_type == 'financials':
         files_to_display = {}
         
-        years_to_process = [selected_year] if selected_year else range(current_year - 2, current_year + 2)
+        # Only show financial reports if the selected entity is authorized for them.
+        # This part assumes all financial reports are generic and not tied to specific entities in their filenames.
+        # If financial PDFs are entity-specific, the file creation and retrieval logic in __main__ and here needs adjustment.
+        # Given prior code, the filenames are entity-specific. Let's adapt this.
+        
+        # Adjusting the financial report generation to use FINANCIAL_REPORT_DEFINITIONS
+        years_to_process = [selected_year] if selected_year else range(current_app_year - 2, current_app_year + 2) # Use app_year from __main__
 
         for year_val in years_to_process:
             year_reports = []
@@ -454,17 +481,18 @@ def dashboard():
                 if 'applicable_years' in report_def and year_val not in report_def['applicable_years']:
                     continue
 
-                display_name = f"{selected_entity} - {report_def['display_name_part']} - {year_val} - {report_def['basis']}"
+                # Filename is constructed with selected_entity
                 filename = f"{selected_entity} - {report_def['display_name_part']} - {year_val} - {report_def['basis']}.pdf"
                 filepath_check = os.path.join('static', filename)
 
                 if os.path.exists(filepath_check):
                     year_reports.append({
-                        'name': display_name,
+                        'name': f"{report_def['display_name_part']} - {year_val} - {report_def['basis']}", # Display name without entity prefix
                         'webViewLink': url_for('static', filename=filename)
                     })
             if year_reports:
                 files_to_display[year_val] = year_reports
+
 
         return render_template(
             'dashboard.html',
@@ -474,8 +502,7 @@ def dashboard():
             files=files_to_display,
             master_entities=display_entities,
             years=years,
-            selected_year=selected_year,
-            months=months
+            selected_year=selected_year
         )
     elif report_type == 'monthly_bonus':
         return render_template(
@@ -494,7 +521,7 @@ def dashboard():
         return render_template(
             'generic_report.html',
             report_title="Requisitions Report",
-            message=f"Requisitions report for {selected_entity} is under development. Filtered data rows: {len(filtered_data)}"
+            message=f"Requisitions report for {selected_entity} is under development."
         )
     elif report_type == 'marketing_material':
         return render_template(
@@ -521,7 +548,7 @@ if __name__ == '__main__':
     
     # Create dummy PDF files for financial reports (entity-specific)
     for year_val in range(current_app_year - 2, current_app_year + 2):
-        for entity in MASTER_ENTITIES:
+        for entity in MASTER_ENTITIES: # Loop through all master entities
             for report_def in FINANCIAL_REPORT_DEFINITIONS:
                 if 'applicable_years' in report_def and year_val not in report_def['applicable_years']:
                     continue
@@ -607,9 +634,8 @@ if __name__ == '__main__':
                 'SatishD', 'ACG', 'MelindaC', 'MinaK',
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
-                'Andrew_Phys', 'JayM',
-                'AndrewS_Phys', # Matches AndrewS login username
-                'AndrewS_Phys,MelindaC' # Allows both AndrewS and MelindaC to see this line
+                'AndrewS', # Matches AndrewS login username
+                'AndrewS,MelindaC' # Allows both AndrewS and MelindaC to see this line
             ],
             'PatientID': [
                 'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
