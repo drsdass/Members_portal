@@ -108,6 +108,7 @@ def login():
         # Check if user exists and if their role matches the selected session role
         if user_info and user_info.get('role') == session['selected_role'] and check_password_hash(user_info['password_hash'], password):
             session['username'] = username
+            session['user_role'] = user_info['role'] # Store the user's role in session
             return redirect(url_for('select_report'))
         else:
             return render_template('login.html', error='Invalid username or password.'), 401
@@ -121,6 +122,7 @@ def select_report():
         return redirect(url_for('login'))
 
     username = session['username']
+    user_role = session.get('user_role') # Retrieve user_role from session
     user_authorized_entities = users[username]['entities']
 
     # Filter master entities based on the user's authorized entities
