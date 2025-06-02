@@ -29,6 +29,7 @@ UNFILTERED_ACCESS_USERS = ['SatishD', 'AshlieT', 'MinaK', 'BobS']
 # --- User Management (In-memory, with individual names as usernames and their roles) ---
 # For Physician/Provider, the 'username' key will be an internal identifier,
 # and 'email' will be the primary login credential.
+# For Patient, 'username' is internal, 'patient_details' holds login and patient_id.
 users = {
     'SatishD': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES, 'role': 'business_dev_manager'}, # Example BDM
@@ -39,9 +40,9 @@ users = {
     # Physician/Provider example with email login
     'Andrew_Phys': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'physician_provider', 'email': 'andrew@example.com'},
     'AndrewS_Phys': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'physician_provider', 'email': 'andrews@example.com'},
-    # Patient users now have specific details for login
-    'House_Patient': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'House', 'dob': '1980-05-15', 'ssn4': '1234'}},
-    'PatientUser1': {'password_hash': generate_password_hash('patientpass'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'Doe', 'dob': '1990-01-01', 'ssn4': '5678'}}, # Dedicated Patient User
+    # Patient users now have specific details for login AND a patient_id
+    'House_Patient': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'House', 'dob': '1980-05-15', 'ssn4': '1234', 'patient_id': 'PAT001'}},
+    'PatientUser1': {'password_hash': generate_password_hash('patientpass'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'Doe', 'dob': '1990-01-01', 'ssn4': '5678', 'patient_id': 'PAT002'}}, # Dedicated Patient User
     'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx LLC'], 'role': 'business_dev_manager'}, # Example BDM
     'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories LLC'], 'role': 'physician_provider', 'email': 'sonnya@example.com'}, # Example Physician/Provider
     'Omar': {'password_hash': generate_password_hash('password12'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Example Admin
@@ -143,11 +144,12 @@ def login():
                        patient_details['dob'] == dob and \
                        patient_details['ssn4'] == ssn4:
                         session['username'] = username_key # Store the internal username for the session
+                        session['patient_id'] = patient_details['patient_id'] # Store patient_id in session
                         found_patient = True
                         break
             
             if found_patient:
-                return redirect(url_for('select_report'))
+                return redirect(url_for('patient_results')) # Redirect patients to their specific results page
             else:
                 error_message = 'Invalid patient details.'
         elif selected_role == 'physician_provider':
@@ -227,6 +229,61 @@ def register_physician():
 
     return render_template('register_physician.html')
 
+@app.route('/patient_results')
+def patient_results():
+    if 'username' not in session or users[session['username']]['role'] != 'patient':
+        flash("Access denied. Please log in as a patient.", "error")
+        return redirect(url_for('login'))
+
+    patient_username = session['username']
+    patient_id = session.get('patient_id')
+    patient_last_name = users[patient_username]['patient_details']['last_name']
+
+    if df.empty or 'PatientID' not in df.columns or 'Date' not in df.columns:
+        flash("Patient data is not available or incorrectly structured.", "error")
+        return render_template('patient_results.html', patient_name=patient_last_name, results_by_dos={})
+
+    # Filter data for the specific patient
+    patient_data = df[df['PatientID'] == patient_id].copy()
+
+    if patient_data.empty:
+        return render_template('patient_results.html', patient_name=patient_last_name, results_by_dos={}, message="No results found for your patient ID.")
+
+    # Convert 'Date' column to datetime objects if not already
+    if not pd.api.types.is_datetime64_any_dtype(patient_data['Date']):
+        patient_data['Date'] = pd.to_datetime(patient_data['Date'])
+
+    # Sort by Date of Service (DOS)
+    patient_data = patient_data.sort_values(by='Date', ascending=False)
+
+    # Group results by Date of Service (DOS)
+    results_by_dos = {}
+    for index, row in patient_data.iterrows():
+        dos = row['Date'].strftime('%Y-%m-%d') # Format date for display and key
+        if dos not in results_by_dos:
+            results_by_dos[dos] = []
+        
+        # Simulate PDF link for each result (e.g., based on Date and a unique ID)
+        # In a real application, you'd have actual PDF files for each result.
+        # For this demo, we'll create dummy links.
+        # You might have different report types per DOS, e.g., 'Lab Result', 'Summary Report'
+        report_name = f"Lab Result - {row['Location']} - {dos}"
+        # Dummy filename for demonstration. In a real app, this would point to an actual PDF.
+        dummy_pdf_filename = f"Patient_{patient_id}_DOS_{dos}_Report_{index}.pdf"
+        
+        results_by_dos[dos].append({
+            'name': report_name,
+            'webViewLink': url_for('static', filename=dummy_pdf_filename)
+        })
+        # Create dummy PDF file if it doesn't exist
+        filepath = os.path.join('static', dummy_pdf_filename)
+        if not os.path.exists(filepath):
+            with open(filepath, 'w') as f:
+                f.write(f"This is a dummy PDF file for Patient {patient_id}, DOS {dos}, Result {index}.")
+            print(f"Created dummy patient result file: {filepath}")
+
+    return render_template('patient_results.html', patient_name=patient_last_name, results_by_dos=results_by_dos)
+
 
 @app.route('/select_report', methods=['GET', 'POST'])
 def select_report():
@@ -235,6 +292,12 @@ def select_report():
 
     username = session['username']
     user_role = users[username]['role']
+
+    # Patients are redirected to patient_results, so they shouldn't access this directly unless intended.
+    # If a patient somehow lands here, redirect them.
+    if user_role == 'patient':
+        return redirect(url_for('patient_results'))
+
     user_authorized_entities = users[username]['entities']
 
     # Admins get all entities regardless of their specific list
@@ -274,10 +337,7 @@ def select_report():
                 years=years
             )
         
-        # For 'patient' role, entity selection might not be relevant or might be pre-defined
-        if user_role == 'patient' and not selected_entity:
-            selected_entity = None # Allow patients to proceed without entity selection
-        elif not selected_entity and user_role != 'patient':
+        if not selected_entity: # Entity selection is required for non-patient roles here
             flash("Please select an entity.", "error")
             return render_template(
                 'select_report.html',
@@ -319,6 +379,10 @@ def dashboard():
 
     rep = session['username']
     user_role = users[rep]['role']
+
+    # If a patient somehow lands here, redirect them to their specific page
+    if user_role == 'patient':
+        return redirect(url_for('patient_results'))
     
     # Define months and years for dropdowns
     months = [
@@ -357,7 +421,7 @@ def dashboard():
 
     # Authorization check for selected entity (admins bypass specific entity auth)
     if user_role != 'admin' and selected_entity and selected_entity not in user_authorized_entities:
-        if not user_authorized_entities and user_role != 'patient': # Patients might not have entities
+        if not user_authorized_entities:
              flash(f"You do not have any entities assigned to view reports. Please contact support.", "error")
              return render_template(
                 'unauthorized.html',
@@ -382,7 +446,7 @@ def dashboard():
     elif not df.empty and 'Entity' in df.columns:
         if selected_entity: # Only filter by entity if one is selected
             filtered_data = df[df['Entity'] == selected_entity].copy()
-        else: # If no entity is selected (e.g., for patient or some admin views)
+        else: # If no entity is selected (e.g., for some admin views)
             filtered_data = df.copy()
 
         if selected_month and selected_year and 'Date' in filtered_data.columns:
@@ -465,12 +529,8 @@ def dashboard():
             report_title="Marketing Material Report",
             message=f"Marketing Material for {selected_entity} is under development."
         )
-    elif report_type == 'patient_reports': # New report type handler
-        return render_template(
-            'generic_report.html',
-            report_title="Patient Specific Reports",
-            message=f"Patient specific reports for user {rep} and entity {selected_entity if selected_entity else 'N/A'} are under development. Filtered data rows: {len(filtered_data)}"
-        )
+    elif report_type == 'patient_reports': # This is now handled by patient_results route
+        return redirect(url_for('patient_results'))
     else:
         return redirect(url_for('select_report'))
 
@@ -511,7 +571,8 @@ if __name__ == '__main__':
                 '2025-03-25', '2025-03-28', '2025-03-30', # More March data
                 '2025-04-20', '2025-04-22', # More April data
                 '2025-02-01', # Specific row for AndrewS bonus report test
-                '2025-03-01' # New row for multi-user test
+                '2025-03-01', # New row for multi-user test
+                '2025-01-10', '2025-01-20', '2025-03-05', '2025-04-12' # Patient specific data
             ],
             'Location': [
                 'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
@@ -520,8 +581,9 @@ if __name__ == '__main__':
                 'OLD LOCATION X', 'OLD LOCATION Y',
                 'NEW CLINIC Z', 'URGENT CARE A', 'HOSPITAL B',
                 'HEALTH CENTER C', 'WELLNESS SPA D',
-                'BETA TEST LOCATION', # Specific row for AndrewS bonus report test
-                'SHARED PERFORMANCE CLINIC' # New row for multi-user test
+                'BETA TEST LOCATION',
+                'SHARED PERFORMANCE CLINIC',
+                'PATIENT LAB A', 'PATIENT LAB B', 'PATIENT LAB C', 'PATIENT LAB D' # Patient specific data
             ],
             'Reimbursement': [1.98, 150.49, 805.13, 2466.87, 76542.07,
                               500.00, 750.00, 120.00, 900.00,
@@ -529,28 +591,32 @@ if __name__ == '__main__':
                               600.00, 150.00, 2500.00,
                               350.00, 80.00,
                               38.85,
-                              1200.00], # New row for multi-user test
+                              1200.00,
+                              100.00, 200.00, 150.00, 250.00], # Patient specific data
             'COGS': [50.00, 151.64, 250.00, 1950.00, 30725.00,
                      200.00, 300.00, 50.00, 400.00,
                      100.00, 150.00,
                      250.00, 70.00, 1800.00,
                      120.00, 30.00,
                      25.00,
-                     500.00], # New row for multi-user test
+                     500.00,
+                     20.00, 40.00, 30.00, 50.00], # Patient specific data
             'Net': [-48.02, -1.15, 555.13, 516.87, 45817.07,
                                300.00, 450.00, 70.00, 500.00,
                                200.00, 300.00,
                                350.00, 80.00, 700.00,
                                230.00, 50.00,
                                13.85,
-                               700.00], # New row for multi-user test
+                               700.00,
+                               80.00, 160.00, 120.00, 200.00], # Patient specific data
             'Commission': [-14.40, -0.34, 166.53, 155.06, 13745.12,
                                90.00, 135.00, 21.00, 150.00,
                                60.00, 90.00,
                                105.00, 24.00, 210.00,
                                69.00, 15.00,
                                4.16,
-                               210.00], # New row for multi-user test
+                               210.00,
+                               24.00, 48.00, 36.00, 60.00], # Patient specific data
             'Entity': [
                 'AIM Laboratories LLC', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx LLC', 'Enviro Labs LLC',
                 'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Genetics LLC', 'Stat Labs',
@@ -558,25 +624,38 @@ if __name__ == '__main__':
                 'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Lab of Illinois',
                 'First Bio Genetics LLC', 'Enviro Labs LLC',
                 'AIM Laboratories LLC',
-                'First Bio Lab'
+                'First Bio Lab',
+                'First Bio Lab', 'First Bio Lab', 'First Bio Lab', 'First Bio Lab' # Patient specific data
             ],
-            'Associated Rep Name': [ # This is for display in the table
+            'Associated Rep Name': [
                 'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
                 'Satish D', 'ACG', 'Melinda C', 'Mina K',
                 'Vince O', 'Nick C',
                 'Ashlie T', 'Omar', 'Darang T',
                 'Andrew', 'Jay M',
-                'Andrew S', # Specific row for AndrewS bonus report test
-                'Andrew S, Melinda C' # New row for multi-user test
+                'Andrew S',
+                'Andrew S, Melinda C',
+                'N/A', 'N/A', 'N/A', 'N/A' # Patient specific data
             ],
-            'Username': [ # NEW COLUMN - For filtering, must match login username
+            'Username': [
                 'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
                 'SatishD', 'ACG', 'MelindaC', 'MinaK',
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
                 'Andrew_Phys', 'JayM',
-                'AndrewS_Phys', # Matches AndrewS login username
-                'AndrewS_Phys,MelindaC' # Allows both AndrewS and MelindaC to see this line
+                'AndrewS_Phys',
+                'AndrewS_Phys,MelindaC',
+                'House_Patient', 'House_Patient', 'PatientUser1', 'PatientUser1' # Patient specific data
+            ],
+            'PatientID': [ # New column for patient filtering
+                'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
+                'N/A', 'N/A', 'N/A', 'N/A',
+                'N/A', 'N/A',
+                'N/A', 'N/A', 'N/A',
+                'N/A', 'N/A',
+                'N/A',
+                'N/A',
+                'PAT001', 'PAT001', 'PAT002', 'PAT002' # Link to patient_id in users dict
             ]
         }
         dummy_df = pd.DataFrame(dummy_data)
