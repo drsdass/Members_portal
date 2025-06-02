@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from flask import Flask, render_template, request, redirect, session, url_for, flash
+from flask import Flask, render_template, request, redirect, session, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import re # Import the regular expression module
@@ -121,7 +121,6 @@ def select_report():
         return redirect(url_for('login'))
 
     username = session['username']
-    user_role = users[username]['role'] # Get the user's role
     user_authorized_entities = users[username]['entities']
 
     # Filter master entities based on the user's authorized entities
@@ -340,7 +339,7 @@ def dashboard():
             master_entities=user_authorized_entities, # Only authorized entities for this user
             years=years, # Only years dropdown for financials
             selected_year=selected_year,
-            data=filtered_data.to_dict(orient='records') # Pass filtered_data for the table
+            data=filtered_data.to_dict(orient='records') # ADDED: Pass filtered_data for the table
         )
     elif report_type == 'monthly_bonus':
         return render_template(
@@ -355,17 +354,19 @@ def dashboard():
             selected_month=selected_month,
             selected_year=selected_year
         )
+    # NEW: Handle 'requisitions' and 'marketing_material'
     elif report_type == 'requisitions':
-        # Placeholder for Requisitions report
+        # You would fetch or generate data/files relevant to requisitions here
+        # For now, let's return a simple placeholder page or redirect
         return render_template(
-            'generic_report.html',
+            'generic_report.html', # Create a generic_report.html template for these
             report_title="Requisitions Report",
             message=f"Requisitions report for {selected_entity} is under development."
         )
     elif report_type == 'marketing_material':
-        # Placeholder for Marketing Material report
+        # You would fetch or generate data/files relevant to marketing material here
         return render_template(
-            'generic_report.html',
+            'generic_report.html', # Create a generic_report.html template for these
             report_title="Marketing Material Report",
             message=f"Marketing Material for {selected_entity} is under development."
         )
@@ -481,4 +482,3 @@ if __name__ == '__main__':
         print("Created dummy data.csv for demonstration.")
 
     app.run(debug=True)
-
