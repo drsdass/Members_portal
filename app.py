@@ -50,6 +50,9 @@ users = {
     'DarangT': {'password_hash': generate_password_hash('password14'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'BobS': {'password_hash': generate_password_hash('password15'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
     'PhysicianUser1': {'password_hash': generate_password_hash('physicianpass'), 'entities': ['First Bio Lab'], 'role': 'physician_provider', 'email': 'physician1@example.com'}, # Dedicated Physician User
+    # CORRECTED: SalesUser1 role changed from 'sales_marketing' to 'business_dev_manager'
+    'SalesUser1': {'password_hash': generate_password_hash('salespass1'), 'entities': MASTER_ENTITIES, 'role': 'business_dev_manager'},
+    'MarketingUser1': {'password_hash': generate_password_hash('marketpass1'), 'entities': MASTER_ENTITIES, 'role': 'business_dev_manager'}, # Assuming Marketing is also BDM
 }
 
 # --- Define Report Types by Role ---
@@ -59,16 +62,16 @@ REPORT_TYPES_BY_ROLE = {
         {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'},
         {'value': 'requisitions', 'name': 'Requisitions'},
         {'value': 'marketing_material', 'name': 'Marketing Material'},
-        {'value': 'patient_reports', 'name': 'Patient Specific Reports'} # New report type
+        {'value': 'patient_reports', 'name': 'Patient Specific Reports'}
     ],
     'physician_provider': [
         {'value': 'requisitions', 'name': 'Requisitions'},
-        {'value': 'patient_reports', 'name': 'Patient Specific Reports'} # New report type
+        {'value': 'patient_reports', 'name': 'Patient Specific Reports'}
     ],
     'patient': [
-        {'value': 'patient_reports', 'name': 'Patient Specific Reports'} # New report type
+        {'value': 'patient_reports', 'name': 'Patient Specific Reports'}
     ],
-    'business_dev_manager': [
+    'business_dev_manager': [ # This role now includes the reports previously under 'sales_marketing'
         {'value': 'requisitions', 'name': 'Requisitions'},
         {'value': 'marketing_material', 'name': 'Marketing Material'},
         {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'}
@@ -228,61 +231,6 @@ def register_physician():
         return redirect(url_for('login'))
 
     return render_template('register_physician.html')
-
-@app.route('/patient_results')
-def patient_results():
-    if 'username' not in session or users[session['username']]['role'] != 'patient':
-        flash("Access denied. Please log in as a patient.", "error")
-        return redirect(url_for('login'))
-
-    patient_username = session['username']
-    patient_id = session.get('patient_id')
-    patient_last_name = users[patient_username]['patient_details']['last_name']
-
-    if df.empty or 'PatientID' not in df.columns or 'Date' not in df.columns:
-        flash("Patient data is not available or incorrectly structured.", "error")
-        return render_template('patient_results.html', patient_name=patient_last_name, results_by_dos={})
-
-    # Filter data for the specific patient
-    patient_data = df[df['PatientID'] == patient_id].copy()
-
-    if patient_data.empty:
-        return render_template('patient_results.html', patient_name=patient_last_name, results_by_dos={}, message="No results found for your patient ID.")
-
-    # Convert 'Date' column to datetime objects if not already
-    if not pd.api.types.is_datetime64_any_dtype(patient_data['Date']):
-        patient_data['Date'] = pd.to_datetime(patient_data['Date'])
-
-    # Sort by Date of Service (DOS)
-    patient_data = patient_data.sort_values(by='Date', ascending=False)
-
-    # Group results by Date of Service (DOS)
-    results_by_dos = {}
-    for index, row in patient_data.iterrows():
-        dos = row['Date'].strftime('%Y-%m-%d') # Format date for display and key
-        if dos not in results_by_dos:
-            results_by_dos[dos] = []
-        
-        # Simulate PDF link for each result (e.g., based on Date and a unique ID)
-        # In a real application, you'd have actual PDF files for each result.
-        # For this demo, we'll create dummy links.
-        # You might have different report types per DOS, e.g., 'Lab Result', 'Summary Report'
-        report_name = f"Lab Result - {row['Location']} - {dos}"
-        # Dummy filename for demonstration. In a real app, this would point to an actual PDF.
-        dummy_pdf_filename = f"Patient_{patient_id}_DOS_{dos}_Report_{index}.pdf"
-        
-        results_by_dos[dos].append({
-            'name': report_name,
-            'webViewLink': url_for('static', filename=dummy_pdf_filename)
-        })
-        # Create dummy PDF file if it doesn't exist
-        filepath = os.path.join('static', dummy_pdf_filename)
-        if not os.path.exists(filepath):
-            with open(filepath, 'w') as f:
-                f.write(f"This is a dummy PDF file for Patient {patient_id}, DOS {dos}, Result {index}.")
-            print(f"Created dummy patient result file: {filepath}")
-
-    return render_template('patient_results.html', patient_name=patient_last_name, results_by_dos=results_by_dos)
 
 
 @app.route('/select_report', methods=['GET', 'POST'])
