@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Financials</title>
+    <title>Financials Report for {{ current_username }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
@@ -94,7 +94,13 @@
                             <tr>
                                 {% for key, value in row.items() %}
                                     {% if key != 'Username' and key != 'PatientID' %} {# Do not display 'Username' or 'PatientID' #}
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ value }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {% if key in ['Reimbursement', 'COGS', 'Net', 'Commission'] and value is number %} {# Check if number before formatting #}
+                                                ${{ "{:,.2f}".format(value) }}
+                                            {% else %}
+                                                {{ value }}
+                                            {% endif %}
+                                        </td>
                                     {% endif %}
                                 {% endfor %}
                             </tr>
