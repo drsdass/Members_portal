@@ -91,6 +91,18 @@ FINANCIAL_REPORT_DEFINITIONS = [
     {'display_name_part': 'YTD Management Report', 'basis': 'Cash Basis', 'file_suffix': '-YTD Management Report - Cash Basis', 'applicable_years': [2025]}
 ]
 
+# Global lists for months and years (for dropdowns)
+MONTHS = [
+    {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
+    {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
+    {'value': 5, 'name': 'May'}, {'value': 6, 'name': 'June'},
+    {'value': 7, 'name': 'July'}, {'value': 8, 'name': 'August'},
+    {'value': 9, 'name': 'September'}, {'value': 10, 'name': 'October'},
+    {'value': 11, 'name': 'November'}, {'value': 12, 'name': 'December'}
+]
+CURRENT_APP_YEAR = datetime.datetime.now().year
+YEARS = list(range(CURRENT_APP_YEAR - 2, CURRENT_APP_YEAR + 2)) # e.g., 2023, 2024, 2025, 2026
+
 
 # --- Data Loading (Optimized: Load once at app startup) ---
 df = pd.DataFrame() # Initialize as empty to avoid error if file not found
@@ -101,6 +113,34 @@ except FileNotFoundError:
     print("Error: data.csv not found. Please ensure the file is in the same directory as app.py. Dummy data will be created.")
 except Exception as e:
     print(f"An error occurred while loading data.csv: {e}")
+
+# --- Context Processor to inject global data into all templates ---
+@app.context_processor
+def inject_global_data():
+    if 'username' in session:
+        username = session['username']
+        user_info = users.get(username)
+        if user_info:
+            user_role = user_info['role']
+            user_authorized_entities = user_info['entities']
+            available_report_types = REPORT_TYPES_BY_ROLE.get(user_role, [])
+            return dict(
+                user_role=user_role,
+                user_authorized_entities=user_authorized_entities,
+                MASTER_ENTITIES=MASTER_ENTITIES,
+                available_report_types=available_report_types,
+                months=MONTHS,
+                years=YEARS,
+                current_app_year=CURRENT_APP_YEAR,
+                current_username=username # Pass current username for display in base template
+            )
+    return dict(
+        MASTER_ENTITIES=MASTER_ENTITIES,
+        months=MONTHS,
+        years=YEARS,
+        current_app_year=CURRENT_APP_YEAR,
+        current_username=None # No user logged in
+    )
 
 # --- Routes ---
 
@@ -152,6 +192,7 @@ def login():
                        patient_details['ssn4'] == ssn4:
                         session['username'] = username_key
                         session['patient_id'] = patient_details['patient_id']
+                        session['user_role'] = user_info['role'] # Store role in session
                         found_patient = True
                         break
             
@@ -169,6 +210,7 @@ def login():
                 if user_info.get('role') == 'physician_provider' and user_info.get('email') and user_info['email'].lower() == email.lower():
                     if check_password_hash(user_info['password_hash'], password):
                         session['username'] = username_key
+                        session['user_role'] = user_info['role'] # Store role in session
                         found_physician = True
                         break
             
@@ -177,7 +219,7 @@ def login():
             else:
                 error_message = 'Invalid email or password.'
         else:
-            # All other roles (now only 'admin' based on your list, and 'business_dev_manager' if any exist) use Username and Password
+            # All other roles (admin, business_dev_manager) use Username and Password
             username = request.form.get('username')
             password = request.form.get('password')
             
@@ -185,6 +227,7 @@ def login():
 
             if user_info and user_info.get('role') == selected_role and check_password_hash(user_info['password_hash'], password):
                 session['username'] = username
+                session['user_role'] = user_info['role'] # Store role in session
                 return redirect(url_for('select_report'))
             else:
                 error_message = 'Invalid username or password.'
@@ -284,18 +327,42 @@ def select_report():
 
     display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
 
-    available_report_types = REPORT_TYPES_BY_ROLE.get(user_role, [])
+    # Handle direct links from sidebar (GET request with query parameters)
+    if request.method == 'GET':
+        pre_selected_report_type = request.args.get('report_type')
+        pre_selected_entity = request.args.get('entity')
+        pre_selected_month = request.args.get('month')
+        pre_selected_year = request.args.get('year')
 
-    months = [
-        {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
-        {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
-        {'value': 5, 'name': 'May'}, {'value': 6, 'name': 'June'},
-        {'value': 7, 'name': 'July'}, {'value': 8, 'name': 'August'},
-        {'value': 9, 'name': 'September'}, {'value': 10, 'name': 'October'},
-        {'value': 11, 'name': 'November'}, {'value': 12, 'name': 'December'}
-    ]
-    current_year = datetime.datetime.now().year
-    years = list(range(current_year - 2, current_year + 2))
+        if pre_selected_report_type:
+            session['report_type'] = pre_selected_report_type
+            # If an entity is pre-selected or already in session, use it. Otherwise, user must select.
+            if pre_selected_entity:
+                session['selected_entity'] = pre_selected_entity
+            elif 'selected_entity' not in session and user_authorized_entities:
+                # If no entity selected yet, and user has authorized entities, pick the first one as default
+                session['selected_entity'] = user_authorized_entities[0]
+            
+            session['selected_month'] = int(pre_selected_month) if pre_selected_month else None
+            session['selected_year'] = int(pre_selected_year) if pre_selected_year else None
+            
+            # Redirect to the appropriate dashboard/report page if all necessary info is present
+            if pre_selected_report_type == 'patient_reports' and user_role == 'patient':
+                return redirect(url_for('patient_results'))
+            elif session.get('selected_entity'): # Ensure an entity is selected for other reports
+                return redirect(url_for('dashboard'))
+            else:
+                # If report type is selected but no entity (and needed), stay on select_report
+                flash("Please select an entity for this report.", "error")
+                return render_template(
+                    'select_report.html',
+                    master_entities=display_entities,
+                    selected_entity=session.get('selected_entity'), # Pass selected_entity back to template
+                    selected_report_type=session.get('report_type'), # Pass selected_report_type back to template
+                    selected_month=session.get('selected_month'),
+                    selected_year=session.get('selected_year')
+                )
+
 
     if request.method == 'POST':
         report_type = request.form.get('report_type')
@@ -308,9 +375,10 @@ def select_report():
             return render_template(
                 'select_report.html',
                 master_entities=display_entities,
-                available_report_types=available_report_types,
-                months=months,
-                years=years
+                selected_entity=selected_entity,
+                selected_report_type=report_type,
+                selected_month=selected_month,
+                selected_year=selected_year
             )
         
         if selected_entity not in user_authorized_entities:
@@ -321,9 +389,10 @@ def select_report():
             return render_template(
                 'select_report.html',
                 master_entities=display_entities,
-                available_report_types=available_report_types,
-                months=months,
-                years=years
+                selected_entity=selected_entity,
+                selected_report_type=report_type,
+                selected_month=selected_month,
+                selected_year=selected_year
             )
         
         session['report_type'] = report_type
@@ -331,14 +400,19 @@ def select_report():
         session['selected_month'] = int(selected_month) if selected_month else None
         session['selected_year'] = int(selected_year) if selected_year else None
         
-        return redirect(url_for('dashboard'))
+        if report_type == 'patient_reports' and user_role == 'patient':
+            return redirect(url_for('patient_results'))
+        else:
+            return redirect(url_for('dashboard'))
     
+    # For initial GET request or after an error
     return render_template(
         'select_report.html',
         master_entities=display_entities,
-        available_report_types=available_report_types,
-        months=months,
-        years=years
+        selected_entity=session.get('selected_entity'), # Pre-select if already in session
+        selected_report_type=session.get('report_type'), # Pre-select if already in session
+        selected_month=session.get('selected_month'),
+        selected_year=session.get('selected_year')
     )
 
 @app.route('/dashboard', methods=['GET', 'POST'])
@@ -349,23 +423,14 @@ def dashboard():
     rep = session['username']
     user_role = users[rep]['role']
     
-    months = [
-        {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
-        {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
-        {'value': 5, 'name': 'May'}, {'value': 6, 'name': 'June'},
-        {'value': 7, 'name': 'July'}, {'value': 8, 'name': 'August'},
-        {'value': 9, 'name': 'September'}, {'value': 10, 'name': 'October'},
-        {'value': 11, 'name': 'November'}, {'value': 12, 'name': 'December'}
-    ]
-    current_year = datetime.datetime.now().year
-    years = list(range(current_year - 2, current_year + 2))
-
+    # Get selections from session (or from POST request if coming from a form on dashboard/monthly_bonus)
     if request.method == 'POST':
         selected_entity = request.form.get('entity_name')
         report_type = request.form.get('report_type')
         selected_month = int(request.form.get('month')) if request.form.get('month') else None
         selected_year = int(request.form.get('year')) if request.form.get('year') else None
 
+        # Update session with new selections
         session['selected_entity'] = selected_entity
         session['selected_month'] = selected_month
         session['selected_year'] = selected_year
@@ -376,22 +441,19 @@ def dashboard():
         selected_month = session.get('selected_month')
         selected_year = session.get('selected_year')
 
+    # Ensure an entity is selected for non-patient reports
+    if report_type != 'patient_reports' and not selected_entity:
+        flash("Please select an entity to view this report.", "error")
+        return redirect(url_for('select_report'))
+
     user_authorized_entities = users[rep]['entities']
-    display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
-
-
+    
     if selected_entity and selected_entity not in user_authorized_entities:
         if not user_authorized_entities:
              flash("You do not have any entities assigned to view reports. Please contact support.", "error")
              return render_template('unauthorized.html', message="You do not have any entities assigned to view reports. Please contact support.")
         flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity.", "error")
-        return render_template(
-            'select_report.html',
-            master_entities=display_entities,
-            available_report_types=REPORT_TYPES_BY_ROLE.get(user_role, []),
-            months=months,
-            years=years
-        )
+        return redirect(url_for('select_report')) # Redirect back to selection page with error
 
 
     filtered_data = pd.DataFrame()
@@ -404,7 +466,7 @@ def dashboard():
         if selected_entity:
             filtered_data = df[df['Entity'] == selected_entity].copy()
         else:
-            filtered_data = df.copy()
+            filtered_data = df.copy() # Should not happen if selected_entity is validated above
 
         if selected_month and selected_year and 'Date' in filtered_data.columns:
             if not pd.api.types.is_datetime64_any_dtype(filtered_data['Date']):
@@ -426,50 +488,10 @@ def dashboard():
     else:
         print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
 
-    # Define financial files structure (This will not change based on user entity access, only visibility)
-    current_app_year = datetime.datetime.now().year # Ensure current_app_year is defined here
-    financial_files_data = {
-        2023: [
-            {'name': '2023 1Q Profit and Loss', 'filename': '2023_1Q_PL.pdf'},
-            {'name': '2023 1Q Balance Sheet', 'filename': '2023_1Q_BS.pdf'},
-            {'name': '2023 2Q Profit and Loss', 'filename': '2023_2Q_PL.pdf'},
-            {'name': '2023 2Q Balance Sheet', 'filename': '2023_2Q_BS.pdf'},
-            {'name': '2023 3Q Profit and Loss', 'filename': '2023_3Q_PL.pdf'},
-            {'name': '2023 3Q Balance Sheet', 'filename': '2023_3Q_BS.pdf'},
-            {'name': '2023 4Q Profit and Loss', 'filename': '2023_4Q_PL.pdf'},
-            {'name': '2023 4Q Balance Sheet', 'filename': '2023_4Q_BS.pdf'},
-            {'name': '2023 Annual Report', 'filename': '2023_Annual.pdf'}
-        ],
-        2024: [
-            {'name': '2024 1Q Profit and Loss', 'filename': '2024_1Q_PL.pdf'},
-            {'name': '2024 1Q Balance Sheet', 'filename': '2024_1Q_BS.pdf'},
-            {'name': '2024 2Q Profit and Loss', 'filename': '2024_2Q_PL.pdf'},
-            {'name': '2024 2Q Balance Sheet', 'filename': '2024_2Q_BS.pdf'},
-            {'name': '2024 3Q Profit and Loss', 'filename': '2024_3Q_PL.pdf'},
-            {'name': '2024 3Q Balance Sheet', 'filename': '2024_3Q_BS.pdf'},
-            {'name': '2024 4Q Profit and Loss', 'filename': '2024_4Q_PL.pdf'},
-            {'name': '2024 4Q Balance Sheet', 'filename': '2024_4Q_BS.pdf'},
-            {'name': '2024 Annual Report', 'filename': '2024_Annual.pdf'}
-        ],
-        2025: [
-            {'name': '2025 1Q Profit and Loss', 'filename': '2025_1Q_PL.pdf'},
-            {'name': '2025 1Q Balance Sheet', 'filename': '2025_1Q_BS.pdf'},
-            {'name': '2025 2Q Profit and Loss', 'filename': '2025_2Q_PL.pdf'},
-            {'name': '2025 2Q Balance Sheet', 'filename': '2025_2Q_BS.pdf'},
-            {'name': '2025 3Q Profit and Loss', 'filename': '2025_3Q_PL.pdf'},
-            {'name': '2025 3Q Balance Sheet', 'filename': '2025_3Q_BS.pdf'},
-            {'name': '2025 4Q Profit and Loss', 'filename': '2025_4Q_PL.pdf'},
-            {'name': '2025 4Q Balance Sheet', 'filename': '2025_4Q_BS.pdf'},
-            {'name': '2025 Annual Report', 'filename': '2025_Annual.pdf'},
-            {'name': '2025 YTD Report', 'filename': '2025_YTD.pdf'}
-        ]
-    }
-
     if report_type == 'financials':
         files_to_display = {}
         
-        # Adjusting the financial report generation to use FINANCIAL_REPORT_DEFINITIONS
-        years_to_process = [selected_year] if selected_year else range(current_app_year - 2, current_app_year + 2)
+        years_to_process = [selected_year] if selected_year else range(CURRENT_APP_YEAR - 2, CURRENT_APP_YEAR + 2)
 
         for year_val in years_to_process:
             year_reports = []
@@ -482,34 +504,25 @@ def dashboard():
 
                 if os.path.exists(filepath_check):
                     year_reports.append({
-                        'name': f"{report_def['display_name_part']} - {year_val} - {report_def['basis']}", # Display name without entity prefix
+                        'name': f"{report_def['display_name_part']} - {year_val} - {report_def['basis']}",
                         'webViewLink': url_for('static', filename=filename_to_create)
                     })
             if year_reports:
                 files_to_display[year_val] = year_reports
 
-
         return render_template(
             'dashboard.html',
-            rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
             files=files_to_display,
-            master_entities=display_entities,
-            years=years,
-            selected_year=selected_year,
             data=filtered_data.to_dict(orient='records') # Pass filtered_data for the table
         )
     elif report_type == 'monthly_bonus':
         return render_template(
             'monthly_bonus.html',
             data=filtered_data.to_dict(orient='records'),
-            rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
-            master_entities=display_entities,
-            months=months,
-            years=years,
             selected_month=selected_month,
             selected_year=selected_year
         )
@@ -526,8 +539,11 @@ def dashboard():
             message=f"Marketing Material for {selected_entity} is under development."
         )
     elif report_type == 'patient_reports':
+        # This case should ideally be handled by redirecting to patient_results directly from select_report
+        # But as a fallback, if somehow reached here, redirect
         return redirect(url_for('patient_results'))
     else:
+        flash("Invalid report type selected.", "error")
         return redirect(url_for('select_report'))
 
 @app.route('/logout')
@@ -540,10 +556,8 @@ if __name__ == '__main__':
     if not os.path.exists('static'):
         os.makedirs('static')
     
-    current_app_year = datetime.datetime.now().year
-    
     # Create dummy PDF files for financial reports (entity-specific)
-    for year_val in range(current_app_year - 2, current_app_year + 2):
+    for year_val in range(CURRENT_APP_YEAR - 2, CURRENT_APP_YEAR + 2):
         for entity in MASTER_ENTITIES: # Loop through all master entities
             for report_def in FINANCIAL_REPORT_DEFINITIONS:
                 if 'applicable_years' in report_def and year_val not in report_def['applicable_years']:
@@ -557,6 +571,23 @@ if __name__ == '__main__':
                         f.write(f"This is a dummy PDF file for {entity} - {year_val} {report_def['display_name_part']} ({report_def['basis']})")
                     print(f"Created dummy file: {filepath}")
 
+    # Create dummy PDF files for patient results
+    dummy_patient_ids = [details['patient_id'] for user, details in users.items() if details.get('role') == 'patient' and 'patient_details' in details]
+    dummy_locations_for_patients = ['Main Lab', 'Satellite Clinic', 'Remote Testing Site']
+    if dummy_patient_ids:
+        for pid in dummy_patient_ids:
+            for i in range(1, 4): # Create a few reports per patient
+                # Ensure date is valid for dummy data
+                report_date = (datetime.date(2025, 1, 1) + datetime.timedelta(days=i*10)).strftime('%Y-%m-%d')
+                location = dummy_locations_for_patients[i % len(dummy_locations_for_patients)]
+                dummy_pdf_filename = f"Patient_{pid}_DOS_{report_date}_Report_{i}.pdf"
+                filepath = os.path.join('static', dummy_pdf_filename)
+                if not os.path.exists(filepath):
+                    with open(filepath, 'w') as f:
+                        f.write(f"This is a dummy PDF for Patient {pid}, DOS {report_date}, Report {i} from {location}.")
+                    print(f"Created dummy patient file: {filepath}")
+
+
     # Create dummy data.csv if it doesn't exist, with new columns and example data
     if not os.path.exists('data.csv'):
         dummy_data = {
@@ -567,7 +598,8 @@ if __name__ == '__main__':
                 '2025-03-25', '2025-03-28', '2025-03-30', # More March data
                 '2025-04-20', '2025-04-22', # More April data
                 '2025-02-01', # Specific row for AndrewS bonus report test
-                '2025-03-01' # New row for multi-user test
+                '2025-03-01', # New row for multi-user test
+                '2025-01-10', '2025-02-15', '2025-03-20', '2025-04-25' # Patient data
             ],
             'Location': [
                 'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
@@ -577,7 +609,8 @@ if __name__ == '__main__':
                 'NEW CLINIC Z', 'URGENT CARE A', 'HOSPITAL B',
                 'HEALTH CENTER C', 'WELLNESS SPA D',
                 'BETA TEST LOCATION', # Specific row for AndrewS bonus report test
-                'SHARED PERFORMANCE CLINIC' # New row for multi-user test
+                'SHARED PERFORMANCE CLINIC', # New row for multi-user test
+                'Main Lab', 'Satellite Clinic', 'Main Lab', 'Satellite Clinic' # Patient data
             ],
             'Reimbursement': [1.98, 150.49, 805.13, 2466.87, 76542.07,
                               500.00, 750.00, 120.00, 900.00,
@@ -585,28 +618,36 @@ if __name__ == '__main__':
                               600.00, 150.00, 2500.00,
                               350.00, 80.00,
                               38.85,
-                              1200.00], # New row for multi-user test
+                              1200.00, # New row for multi-user test
+                              100.00, 200.00, 150.00, 250.00 # Patient data
+                              ],
             'COGS': [50.00, 151.64, 250.00, 1950.00, 30725.00,
                      200.00, 300.00, 50.00, 400.00,
                      100.00, 150.00,
                      250.00, 70.00, 1800.00,
                      120.00, 30.00,
                      25.00,
-                     500.00], # New row for multi-user test
+                     500.00, # New row for multi-user test
+                     20.00, 40.00, 30.00, 50.00 # Patient data
+                     ],
             'Net': [-48.02, -1.15, 555.13, 516.87, 45817.07,
                                300.00, 450.00, 70.00, 500.00,
                                200.00, 300.00,
                                350.00, 80.00, 700.00,
                                230.00, 50.00,
                                13.85,
-                               700.00], # New row for multi-user test
+                               700.00, # New row for multi-user test
+                               80.00, 160.00, 120.00, 200.00 # Patient data
+                               ],
             'Commission': [-14.40, -0.34, 166.53, 155.06, 13745.12,
                                90.00, 135.00, 21.00, 150.00,
                                60.00, 90.00,
                                105.00, 24.00, 210.00,
                                69.00, 15.00,
                                4.16,
-                               210.00], # New row for multi-user test
+                               210.00, # New row for multi-user test
+                               24.00, 48.00, 36.00, 60.00 # Patient data
+                               ],
             'Entity': [
                 'AIM Laboratories LLC', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx LLC', 'Enviro Labs LLC', # March data
                 'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Genetics LLC', 'Stat Labs', # April data
@@ -614,7 +655,8 @@ if __name__ == '__main__':
                 'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Lab of Illinois', # More March data
                 'First Bio Genetics LLC', 'Enviro Labs LLC', # More April data
                 'AIM Laboratories LLC', # Specific row for AndrewS bonus report test
-                'First Bio Lab' # New row for multi-user test
+                'First Bio Lab', # New row for multi-user test
+                'N/A', 'N/A', 'N/A', 'N/A' # Patient data
             ],
             'Associated Rep Name': [ # This is for display in the table
                 'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
@@ -623,7 +665,8 @@ if __name__ == '__main__':
                 'Ashlie T', 'Omar', 'Darang T',
                 'Andrew', 'Jay M',
                 'Andrew S', # Specific row for AndrewS bonus report test
-                'Andrew S, Melinda C' # New row for multi-user test
+                'Andrew S, Melinda C', # New row for multi-user test
+                'N/A', 'N/A', 'N/A', 'N/A' # Patient data
             ],
             'Username': [ # NEW COLUMN - For filtering, must match login username
                 'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
@@ -632,7 +675,8 @@ if __name__ == '__main__':
                 'AshlieT', 'Omar', 'DarangT',
                 'Andrew', 'JayM',
                 'AndrewS', # Matches AndrewS login username
-                'AndrewS,MelindaC' # Allows both AndrewS and MelindaC to see this line
+                'AndrewS,MelindaC', # Allows both AndrewS and MelindaC to see this line
+                'House_Patient', 'House_Patient', 'PatientUser1', 'PatientUser1' # Patient data
             ],
             'PatientID': [
                 'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
