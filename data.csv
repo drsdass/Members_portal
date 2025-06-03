@@ -1,4 +1,4 @@
-Date,Location,Reimbursement,COGS,Net,Commission,Entity,Associated Rep Name,Username
+Date,Location,Reimbursement,COGS,Net,Commission,Entity,Associated Rep Name,Username,PatientID
 2025-03-01,BIRCH TREE RECOVERY,186.49,150.00,36.49,10.95,AIM Laboratories,Andrew S,AndrewS
 2025-03-01,CENTRAL KENTUCKY SPINE SURGERY - TOX,1.98,50.00,-48.02,-14.41,AIM Laboratories,House,SatishD
 2025-03-01,FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA,150.49,151.64,-1.15,-0.35,AIM Laboratories,House,SatishD
