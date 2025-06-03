@@ -335,47 +335,27 @@ def select_report():
         return redirect(url_for('login'))
 
     username = session['username']
-    user_role = users[username]['role']
+    user_role = users[username]['role'] # Get the user's role
     user_authorized_entities = users[username]['entities']
 
+    # Filter master entities based on the user's authorized entities
+    # This ensures the dropdown only shows entities the user can access
     display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
 
-    # Handle direct links from sidebar (GET request with query parameters)
-    if request.method == 'GET':
-        pre_selected_report_type = request.args.get('report_type')
-        pre_selected_entity = request.args.get('entity')
-        pre_selected_month = request.args.get('month')
-        pre_selected_year = request.args.get('year')
+    # Get report types based on the user's role
+    available_report_types = REPORT_TYPES_BY_ROLE.get(user_role, [])
 
-        if pre_selected_report_type:
-            session['report_type'] = pre_selected_report_type
-            # If an entity is pre-selected or already in session, use it. Otherwise, user must select.
-            if pre_selected_entity:
-                session['selected_entity'] = pre_selected_entity
-            elif 'selected_entity' not in session and user_authorized_entities:
-                # If no entity selected yet, and user has authorized entities, pick the first one as default
-                session['selected_entity'] = user_authorized_entities[0]
-            
-            session['selected_month'] = int(pre_selected_month) if pre_selected_month else None
-            session['selected_year'] = int(pre_selected_year) if pre_selected_year else None
-            
-            # Redirect to the appropriate dashboard/report page if all necessary info is present
-            if pre_selected_report_type == 'patient_reports' and user_role == 'patient':
-                return redirect(url_for('patient_results'))
-            elif session.get('selected_entity'): # Ensure an entity is selected for other reports
-                return redirect(url_for('dashboard'))
-            else:
-                # If report type is selected but no entity (and needed), stay on select_report
-                flash("Please select an entity for this report.", "error")
-                return render_template(
-                    'select_report.html',
-                    master_entities=display_entities,
-                    selected_entity=session.get('selected_entity'), # Pass selected_entity back to template
-                    selected_report_type=session.get('report_type'), # Pass selected_report_type back to template
-                    selected_month=session.get('selected_month'),
-                    selected_year=session.get('selected_year')
-                )
-
+    # Generate lists for months and years for the dropdowns (for monthly bonus and financials)
+    months = [
+        {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
+        {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
+        {'value': 5, 'name': 'May'}, {'value': 6, 'name': 'June'},
+        {'value': 7, 'name': 'July'}, {'value': 8, 'name': 'August'},
+        {'value': 9, 'name': 'September'}, {'value': 10, 'name': 'October'},
+        {'value': 11, 'name': 'November'}, {'value': 12, 'name': 'December'}
+    ]
+    current_year = datetime.datetime.now().year
+    years = list(range(current_year - 2, current_year + 2)) # e.g., 2023, 2024, 2025, 2026
 
     if request.method == 'POST':
         report_type = request.form.get('report_type')
@@ -387,27 +367,36 @@ def select_report():
             flash("Please select both a report type and an entity.", "error")
             return render_template(
                 'select_report.html',
-                master_entities=display_entities,
-                selected_entity=selected_entity,
-                selected_report_type=report_type,
+                master_entities=display_entities, # Use filtered entities here
+                available_report_types=available_report_types, # Pass filtered report types
+                months=months,
+                years=years,
+                selected_entity=selected_entity, # Retain selection on error
+                selected_report_type=report_type, # Retain selection on error
                 selected_month=selected_month,
                 selected_year=selected_year
             )
-        
+
+        # Authorization check: Ensure the selected entity is one the user is authorized for
         if selected_entity not in user_authorized_entities:
             if not user_authorized_entities:
                 flash("You do not have any entities assigned to view reports. Please contact support.", "error")
                 return render_template('unauthorized.html', message="You do not have any entities assigned to view reports. Please contact support.")
+            
             flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for.", "error")
             return render_template(
                 'select_report.html',
                 master_entities=display_entities,
-                selected_entity=selected_entity,
-                selected_report_type=report_type,
+                available_report_types=available_report_types,
+                months=months,
+                years=years,
+                selected_entity=selected_entity, # Retain selection on error
+                selected_report_type=report_type, # Retain selection on error
                 selected_month=selected_month,
                 selected_year=selected_year
             )
         
+        # Store selections in session
         session['report_type'] = report_type
         session['selected_entity'] = selected_entity
         session['selected_month'] = int(selected_month) if selected_month else None
@@ -421,23 +410,32 @@ def select_report():
     # For initial GET request or after an error
     return render_template(
         'select_report.html',
-        master_entities=display_entities,
+        master_entities=display_entities, # Pass filtered entities to template
+        available_report_types=available_report_types, # Pass filtered report types to template
+        months=months,
+        years=years,
         selected_entity=session.get('selected_entity'), # Pre-select if already in session
         selected_report_type=session.get('report_type'), # Pre-select if already in session
         selected_month=session.get('selected_month'),
         selected_year=session.get('selected_year')
     )
 
-@app.route('/dashboard', methods=['GET', 'POST'])
+@app.route('/dashboard', methods=['GET', 'POST']) # Allow POST requests to dashboard
 def dashboard():
     if 'username' not in session:
+        flash("Access denied. Please log in.", "error")
         return redirect(url_for('login'))
 
     rep = session['username']
     user_role = users[rep]['role']
     
-    # Get selections from session (or from POST request if coming from a form on dashboard/monthly_bonus)
+    # Define months and years for dropdowns (needed for dashboard.html and monthly_bonus.html)
+    months = MONTHS # Use the global MONTHS list
+    years = YEARS   # Use the global YEARS list
+    current_app_year = CURRENT_APP_YEAR # Use the global CURRENT_APP_YEAR
+
     if request.method == 'POST':
+        # If coming from a form submission on monthly_bonus.html or dashboard.html
         selected_entity = request.form.get('entity_name')
         report_type = request.form.get('report_type')
         selected_month = int(request.form.get('month')) if request.form.get('month') else None
@@ -460,8 +458,8 @@ def dashboard():
         flash("Please select an entity to view this report.", "error")
         return redirect(url_for('select_report'))
 
+    # Authorization check for selected entity
     user_authorized_entities = users[rep]['entities']
-    
     if selected_entity and selected_entity not in user_authorized_entities:
         if not user_authorized_entities:
              flash("You do not have any entities assigned to view reports. Please contact support.", "error")
@@ -472,40 +470,88 @@ def dashboard():
 
     filtered_data = pd.DataFrame()
 
-    if rep in UNFILTERED_ACCESS_USERS:
-        if not df.empty:
-            filtered_data = df.copy()
-        print(f"User {rep} has unfiltered access. Displaying all data.")
-    elif not df.empty and 'Entity' in df.columns:
-        if selected_entity:
-            filtered_data = df[df['Entity'] == selected_entity].copy()
-        else:
-            filtered_data = df.copy() # Should not happen if selected_entity is validated above
-
-        if selected_month and selected_year and 'Date' in filtered_data.columns:
-            if not pd.api.types.is_datetime64_any_dtype(filtered_data['Date']):
-                filtered_data['Date'] = pd.to_datetime(filtered_data['Date'])
+    try:
+        # Check if the current user has unfiltered access
+        if rep in UNFILTERED_ACCESS_USERS:
+            if not df.empty:
+                filtered_data = df.copy() # Provide a copy of the entire DataFrame
+            print(f"User {rep} has unfiltered access. Displaying all data.")
+        elif not df.empty and 'Entity' in df.columns:
+            # Existing filtering logic for other users
+            if selected_entity:
+                filtered_data = df[df['Entity'] == selected_entity].copy()
+            else:
+                # This case should ideally not be reached if validation in select_report is robust
+                filtered_data = df.copy() 
             
-            filtered_data = filtered_data[
-                (filtered_data['Date'].dt.month == selected_month) &
-                (filtered_data['Date'].dt.year == selected_year)
-            ]
-        
-        # --- Date Formatting for Display ---
-        if 'Date' in filtered_data.columns and pd.api.types.is_datetime64_any_dtype(filtered_data['Date']):
-            filtered_data['Date'] = filtered_data['Date'].dt.strftime('%B %Y') # e.g., 'April 2025'
-        # --- End Date Formatting ---
+            print(f"Initial filtered data for {selected_entity}:\n{filtered_data.head()}")
 
-        if report_type == 'monthly_bonus' and 'Username' in filtered_data.columns:
-            normalized_username = rep.strip().lower()
-            filtered_data['Username'] = filtered_data['Username'].astype(str)
-            regex_pattern = r'\b' + re.escape(normalized_username) + r'\b'
-            filtered_data = filtered_data[
-                filtered_data['Username'].str.strip().str.lower().str.contains(regex_pattern, na=False)
-            ]
-            print(f"User {rep} (non-unfiltered) viewing monthly bonus report. Filtered by 'Username' column.")
-    else:
-        print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
+            if selected_month and selected_year and 'Date' in filtered_data.columns:
+                if not pd.api.types.is_datetime64_any_dtype(filtered_data['Date']):
+                    filtered_data['Date'] = pd.to_datetime(filtered_data['Date'])
+                
+                # Apply date filter
+                filtered_data = filtered_data[
+                    (filtered_data['Date'].dt.month == selected_month) &
+                    (filtered_data['Date'].dt.year == selected_year)
+                ]
+                print(f"Data after month/year filter ({selected_month}/{selected_year}):\n{filtered_data.head()}")
+            
+            # --- Date Formatting for Display (applies to all filtered_data before specific report type logic) ---
+            if 'Date' in filtered_data.columns and pd.api.types.is_datetime64_any_dtype(filtered_data['Date']):
+                # Only format if the column exists and is datetime type
+                # This line could cause an issue if filtered_data is empty and 'Date' column is not datetime.
+                # However, the `is_datetime64_any_dtype` check should prevent that.
+                filtered_data['Date'] = filtered_data['Date'].dt.strftime('%B %Y') # e.g., 'April 2025'
+            # --- End Date Formatting ---
+
+            # NEW FILTERING FOR MONTHLY BONUS REPORTS: Filter by 'Username' column for non-unfiltered users
+            if report_type == 'monthly_bonus' and 'Username' in filtered_data.columns:
+                normalized_username = rep.strip().lower()
+                
+                # Ensure 'Username' column is treated as string for .str methods
+                filtered_data['Username'] = filtered_data['Username'].astype(str)
+
+                # Updated logic: Check if the normalized_username is contained within the (potentially comma-separated) Username string
+                # Using regex for word boundaries to avoid partial matches (e.g., 'and' matching 'andrewS')
+                regex_pattern = r'\b' + re.escape(normalized_username) + r'\b'
+                filtered_data = filtered_data[
+                    filtered_data['Username'].str.strip().str.lower().str.contains(regex_pattern, na=False)
+                ]
+                print(f"User {rep} (non-unfiltered) viewing monthly bonus report. Filtered by 'Username' column. Final data count: {len(filtered_data)}")
+        else:
+            print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
+            flash("Data is not available or incorrectly structured. Please contact support.", "error")
+
+    except Exception as e:
+        print(f"An unexpected error occurred during data filtering: {e}")
+        flash(f"An error occurred while processing your report: {e}", "error")
+        return redirect(url_for('select_report')) # Redirect to selection page on error
+
+    # Define financial files structure
+    financial_files_data = {
+        2023: [
+            {'name': '2023 Profit and Loss account - Accrual Basis', 'filename': 'First Bio Lab - Profit and Loss account - 2023 - Accrual Basis.pdf'},
+            {'name': '2023 Profit and Loss account - Cash Basis', 'filename': 'First Bio Lab - Profit and Loss account - 2023 - Cash Basis.pdf'},
+            {'name': '2023 Balance Sheet - Accrual Basis', 'filename': 'First Bio Lab - Balance Sheet - 2023 - Accrual Basis.pdf'},
+            {'name': '2023 Balance Sheet - Cash Basis', 'filename': 'First Bio Lab - Balance Sheet - 2023 - Cash Basis.pdf'},
+            # Add more 2023 reports if needed
+        ],
+        2024: [
+            {'name': '2024 Profit and Loss account - Accrual Basis', 'filename': 'First Bio Lab - Profit and Loss account - 2024 - Accrual Basis.pdf'},
+            {'name': '2024 Profit and Loss account - Cash Basis', 'filename': 'First Bio Lab - Profit and Loss account - 2024 - Cash Basis.pdf'},
+            {'name': '2024 Balance Sheet - Accrual Basis', 'filename': 'First Bio Lab - Balance Sheet - 2024 - Accrual Basis.pdf'},
+            {'name': '2024 Balance Sheet - Cash Basis', 'filename': 'First Bio Lab - Balance Sheet - 2024 - Cash Basis.pdf'},
+            # Add more 2024 reports if needed
+        ],
+        2025: [
+            {'name': '2025 Profit and Loss account - Accrual Basis', 'filename': 'First Bio Lab - Profit and Loss account - 2025 - Accrual Basis.pdf'},
+            {'name': '2025 Profit and Loss account - Cash Basis', 'filename': 'First Bio Lab - Profit and Loss account - 2025 - Cash Basis.pdf'},
+            {'name': '2025 Balance Sheet - Accrual Basis', 'filename': 'First Bio Lab - Balance Sheet - 2025 - Accrual Basis.pdf'},
+            {'name': '2025 Balance Sheet - Cash Basis', 'filename': 'First Bio Lab - Balance Sheet - 2025 - Cash Basis.pdf'},
+            {'name': '2025 YTD Management Report - Cash Basis', 'filename': 'First Bio Lab - YTD Management Report - 2025 - Cash Basis.pdf'}
+        ]
+    }
 
     if report_type == 'financials':
         files_to_display = {}
@@ -514,46 +560,60 @@ def dashboard():
 
         for year_val in years_to_process:
             year_reports = []
+            # Iterate through FINANCIAL_REPORT_DEFINITIONS to find matching files for the selected entity
             for report_def in FINANCIAL_REPORT_DEFINITIONS:
                 if 'applicable_years' in report_def and year_val not in report_def['applicable_years']:
                     continue
 
-                filename_to_create = f"{selected_entity} - {report_def['display_name_part']} - {year_val} - {report_def['basis']}.pdf"
-                filepath_check = os.path.join('static', filename_to_create)
+                # Construct the filename based on the selected entity and report definition
+                filename_to_find = f"{selected_entity} - {report_def['display_name_part']} - {year_val} - {report_def['basis']}.pdf"
+                filepath_check = os.path.join('static', filename_to_find)
 
                 if os.path.exists(filepath_check):
                     year_reports.append({
                         'name': f"{report_def['display_name_part']} - {year_val} - {report_def['basis']}",
-                        'webViewLink': url_for('static', filename=filename_to_create)
+                        'webViewLink': url_for('static', filename=filename_to_find)
                     })
             if year_reports:
                 files_to_display[year_val] = year_reports
 
         return render_template(
             'dashboard.html',
+            rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
-            files=files_to_display,
-            data=filtered_data.to_dict(orient='records') # Pass filtered_data for the table
+            files=files_to_display, # Pass the structured files data
+            master_entities=[entity for entity in MASTER_ENTITIES if entity in user_authorized_entities], # Only authorized entities for this user
+            years=YEARS, # Years dropdown for financials
+            selected_year=selected_year,
+            months=MONTHS # Pass months for display in dashboard if needed
         )
     elif report_type == 'monthly_bonus':
         return render_template(
             'monthly_bonus.html',
             data=filtered_data.to_dict(orient='records'),
+            rep=rep,
             selected_entity=selected_entity,
             report_type=report_type,
+            master_entities=[entity for entity in MASTER_ENTITIES if entity in user_authorized_entities], # Only authorized entities for this user
+            months=MONTHS,
+            years=YEARS,
             selected_month=selected_month,
             selected_year=selected_year
         )
+    # NEW: Handle 'requisitions' and 'marketing_material'
     elif report_type == 'requisitions':
+        # You would fetch or generate data/files relevant to requisitions here
+        # For now, let's return a simple placeholder page or redirect
         return render_template(
-            'generic_report.html',
+            'generic_report.html', # Create a generic_report.html template for these
             report_title="Requisitions Report",
             message=f"Requisitions report for {selected_entity} is under development."
         )
     elif report_type == 'marketing_material':
+        # You would fetch or generate data/files relevant to marketing material here
         return render_template(
-            'generic_report.html',
+            'generic_report.html', # Create a generic_report.html template for these
             report_title="Marketing Material Report",
             message=f"Marketing Material for {selected_entity} is under development."
         )
@@ -579,7 +639,7 @@ if __name__ == '__main__':
     
     # Create dummy PDF files for financial reports (entity-specific)
     for year_val in range(current_app_year - 2, current_app_year + 2):
-        for entity in MASTER_ENTITIES: # Loop through all master entities
+        for entity in MASTER_ENTITIES:
             for report_def in FINANCIAL_REPORT_DEFINITIONS:
                 if 'applicable_years' in report_def and year_val not in report_def['applicable_years']:
                     continue
@@ -692,7 +752,7 @@ if __name__ == '__main__':
                 'SatishD', 'ACG', 'MelindaC', 'MinaK',
                 'VinceO', 'NickC',
                 'AshlieT', 'Omar', 'DarangT',
-                'Andrew', 'JayM',
+                'Andrew', 'JayM', # Matches JayM login username
                 'AndrewS', # Matches AndrewS login username
                 'AndrewS,MelindaC' # Allows both AndrewS and MelindaC to see this line
             ]
