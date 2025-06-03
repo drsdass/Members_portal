@@ -9,31 +9,43 @@
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+<body class="bg-gray-100 flex">
+    {% extends 'base_dashboard.html' %}
+
+    {% block title %}Select Report & Entity{% endblock %}
+
+    {% block content %}
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-auto">
         <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Select Report and Entity</h2>
-        <p class="text-center text-gray-600 mb-6">Welcome, {{ session['username'] }}!</p>
-        {% if error %}
-            <p class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4 text-center">{{ error }}</p>
-        {% endif %}
-        <form action="/select_report" method="post" class="space-y-6">
+        <p class="text-center text-gray-600 mb-6">Welcome, {{ current_username }}!</p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <p class="bg-{{ 'red' if category == 'error' else 'green' }}-100 border border-{{ 'red' if category == 'error' else 'green' }}-400 text-{{ 'red' if category == 'error' else 'green' }}-700 px-4 py-3 rounded-md mb-4 text-center">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <form action="{{ url_for('select_report') }}" method="post" class="space-y-6">
+            {% if user_role != 'patient' %} {# Patient role does not select entity #}
             <div>
                 <label for="entity_name" class="block text-sm font-medium text-gray-700 mb-1">Choose an Entity:</label>
                 <select id="entity_name" name="entity_name" required
                         class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                     <option value="">-- Select Entity --</option>
-                    {% for entity in master_entities %}
-                        <option value="{{ entity }}">{{ entity }}</option>
+                    {% for entity in user_authorized_entities %} {# Use user_authorized_entities #}
+                        <option value="{{ entity }}" {% if entity == selected_entity %}selected{% endif %}>{{ entity }}</option>
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
+
             <div>
                 <label for="report_type" class="block text-sm font-medium text-gray-700 mb-1">Choose a Report Type:</label>
                 <select id="report_type" name="report_type" required
                         class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                     <option value="">-- Select Report Type --</option>
                     {% for report_type_option in available_report_types %}
-                        <option value="{{ report_type_option.value }}">{{ report_type_option.name }}</option>
+                        <option value="{{ report_type_option.value }}" {% if report_type_option.value == selected_report_type %}selected{% endif %}>{{ report_type_option.name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -46,7 +58,7 @@
                         <select id="month" name="month" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                             <option value="">-- Select Month --</option>
                             {% for month in months %}
-                                <option value="{{ month.value }}">{{ month.name }}</option>
+                                <option value="{{ month.value }}" {% if month.value == selected_month %}selected{% endif %}>{{ month.name }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -55,7 +67,7 @@
                         <select id="year" name="year" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                             <option value="">-- Select Year --</option>
                             {% for year in years %}
-                                <option value="{{ year }}">{{ year }}</option>
+                                <option value="{{ year }}" {% if year == selected_year %}selected{% endif %}>{{ year }}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -67,9 +79,6 @@
                 View Report
             </button>
         </form>
-        <div class="mt-6 text-center">
-            <a href="/logout" class="text-blue-600 hover:underline">Logout</a>
-        </div>
     </div>
 
     <script>
@@ -93,5 +102,7 @@
             reportTypeSelect.addEventListener('change', toggleMonthYear);
         });
     </script>
+    {% endblock %}
 </body>
 </html>
+
