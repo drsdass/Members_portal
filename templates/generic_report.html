@@ -9,18 +9,16 @@
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md text-center">
+<body class="bg-gray-100 flex">
+    {% extends 'base_dashboard.html' %}
+
+    {% block title %}{{ report_title }}{% endblock %}
+
+    {% block content %}
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md mx-auto text-center">
         <h2 class="text-3xl font-bold text-gray-800 mb-4">{{ report_title }}</h2>
         <p class="text-gray-700 mb-6">{{ message }}</p>
-        <div class="mt-6 flex justify-center space-x-4">
-            <a href="{{ url_for('select_report') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Back to Report Selection
-            </a>
-            <a href="{{ url_for('logout') }}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-gray-600 bg-gray-200 hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                Logout
-            </a>
-        </div>
     </div>
+    {% endblock %}
 </body>
 </html>
