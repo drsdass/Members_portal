@@ -3,248 +3,110 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard for {{ rep }}</title>
+    <title>Dashboard - Financials</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Embed custom styles here since no external style.css */
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            background-color: #f4f4f4;
-            color: #333;
-        }
-        .container {
-            background-color: #fff;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            max-width: 90%;
-            margin: 20px auto;
-        }
-        h1, h2 {
-            color: #0056b3;
-        }
-        .report-info {
-            margin-bottom: 20px;
-            padding: 10px;
-            background-color: #e9e9e9;
-            border-radius: 5px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #0056b3;
-            color: white;
-            font-size: 0.9em;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .no-data {
-            text-align: center;
-            padding: 20px;
-            color: #888;
-        }
-        .back-link, .logout-link {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 15px;
-            background-color: #007bff;
-            color: white;
-            text-decoration: none;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-        }
-        .back-link:hover, .logout-link:hover {
-            background-color: #0056b3;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-        }
-        .form-group select, .form-group input[type="submit"] {
-            width: auto;
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            margin-right: 10px;
-        }
-        .form-group input[type="submit"] {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        .form-group input[type="submit"]:hover {
-            background-color: #218838;
-        }
-
-        /* Styles for the main logo */
-        .logo-img {
-            max-width: 150px; /* Keep prominent size */
-            height: auto;
-            margin-right: 20px; /* Increased margin for separation */
-            opacity: 1.0;
-        }
-
-        /* Styles for secondary logos */
-        .secondary-logo-img {
-            max-width: 110px; /* Made a bit larger (from 90px to 110px) */
-            height: auto;
-            opacity: 1.0;
-        }
-
-        /* Navbar styles */
-        .navbar {
-            background-color: #343a40 !important;
-            padding: 10px 20px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-            display: flex;
-            align-items: center;
-            justify-content: space-between; /* Distribute items: left, center, right */
-            flex-wrap: wrap; /* Allow wrapping on smaller screens */
-        }
-
-        .navbar-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .navbar-brand {
-            color: #fff !important;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            text-decoration: none;
-        }
-
-        .navbar-brand:hover {
-            color: #f8f9fa !important;
-        }
-
-        /* Container for secondary logos */
-        .navbar-secondary-logos {
-            display: flex;
-            flex-grow: 1; /* Allow this section to take available space */
-            justify-content: space-evenly; /* Distribute logos evenly */
-            align-items: center;
-            margin: 0 20px; /* Add some horizontal margin */
-            flex-wrap: wrap; /* Allow secondary logos to wrap if needed */
-            gap: 10px; /* Space between secondary logos */
-        }
-
-        .logout-button {
-            background-color: #dc3545; /* Red color for logout button */
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 1rem;
-            text-decoration: none; /* Ensure it looks like a button not a link */
-            display: inline-block; /* Allows padding and margin to work correctly */
-        }
-
-        .logout-button:hover {
-            background-color: #c82333;
-        }
-
-        /* Styles for clickable PDF file names */
-        .report-list li a {
-            color: #007bff; /* Blue color */
-            font-weight: bold; /* Bold font */
-            text-decoration: underline; /* Underline by default to indicate clickability */
-        }
-        .report-list li a:hover {
-            text-decoration: none; /* Remove underline on hover for a subtle effect */
-            color: #0056b3; /* Slightly darker blue on hover */
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .table-auto { width: 100%; border-collapse: collapse; }
+        .table-auto th, .table-auto td { padding: 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        .table-auto th { background-color: #f8fafc; font-weight: 600; }
     </style>
 </head>
-<body>
-    <nav class="navbar">
-        <div class="navbar-left">
-            <a class="navbar-brand" href="#">
-                <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Main Company Logo" class="logo-img">
-                Report Dashboard
-            </a>
-        </div>
-        <div class="navbar-secondary-logos">
-            {# Add your other logos here, ensuring these files are in your 'static' folder #}
-            <img src="{{ url_for('static', filename='First Bio Lab of Illinois.png') }}" alt="First Bio Lab of Illinois" class="secondary-logo-img">
-            <img src="{{ url_for('static', filename='Logo.png') }}" alt="Generic Logo" class="secondary-logo-img">
-            <img src="{{ url_for('static', filename='LOGO (1).PNG') }}" alt="Generic Logo 1" class="secondary-logo-img">
-            <img src="{{ url_for('static', filename='statlabs.png') }}" alt="Stat Labs Logo" class="secondary-logo-img">
-            <img src="{{ url_for('static', filename='FBG Logo.png') }}" alt="FBG Logo" class="secondary-logo-img">
-            <img src="{{ url_for('static', filename='Enviro Labs.png') }}" alt="Enviro Labs Logo" class="secondary-logo-img">
-            <img src="{{ url_for('static', filename='Amico White.png') }}" alt="Amico White Logo" class="secondary-logo-img"> {# Added new logo #}
-        </div>
-        <a href="{{ url_for('logout') }}" class="logout-button">Logout</a>
-    </nav>
-    <div class="container">
-        <h1>Financial Reports for {{ rep }}</h1>
+<body class="bg-gray-100 flex">
+    {% extends 'base_dashboard.html' %}
 
-        <div class="report-info">
-            <p><strong>Selected Entity:</strong> {{ selected_entity }}</p>
-            <p><strong>Period:</strong> {% if selected_year %}{{ selected_year }}{% else %}All Available Years{% endif %}</p>
-        </div>
+    {% block title %}Financials Report for {{ current_username }}{% endblock %}
 
-        <h2>Change Report Parameters:</h2>
-        <form action="{{ url_for('dashboard') }}" method="POST">
+    {% block content %}
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full">
+        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Financials Report for {{ current_username }}</h2>
+        <p class="text-center text-gray-600 mb-2">Selected Entity: <span class="font-semibold text-blue-700">{{ selected_entity }}</span></p>
+        <p class="text-center text-gray-600 mb-6">Viewing: <span class="font-semibold">{{ report_type | capitalize }}</span></p>
+
+        <h3 class="text-xl font-semibold text-gray-700 mb-4">Change Report Parameters:</h3>
+        <form action="{{ url_for('dashboard') }}" method="POST" class="space-y-4 mb-8">
             <input type="hidden" name="report_type" value="financials">
-            <div class="form-group">
-                <label for="entity_name">Entity Type:</label>
-                <select id="entity_name" name="entity_name" required class="form-control">
-                    {% for entity in master_entities %}
-                        <option value="{{ entity }}" {% if entity == selected_entity %}selected{% endif %}>{{ entity }}</option>
-                    {% endfor %}
-                </select>
+            <div class="flex flex-wrap items-center gap-4">
+                <div class="flex-1 min-w-[150px]">
+                    <label for="entity_name" class="block text-sm font-medium text-gray-700 mb-1">Entity Type:</label>
+                    <select id="entity_name" name="entity_name" required
+                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        {% for entity in user_authorized_entities %}
+                            <option value="{{ entity }}" {% if entity == selected_entity %}selected{% endif %}>{{ entity }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
 
-                <label for="year">Year:</label>
-                <select id="year" name="year" class="form-control">
-                    <option value="">All Years</option> {# Option to view all years #}
-                    {% for y in years %}
-                        <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
-                    {% endfor %}
-                </select>
-                <input type="submit" value="Generate Report" class="btn-primary">
+                <div class="flex-1 min-w-[150px]">
+                    <label for="year" class="block text-sm font-medium text-gray-700 mb-1">Year:</label>
+                    <select id="year" name="year"
+                            class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        <option value="">All Years</option>
+                        {% for y in years %}
+                            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="flex-shrink-0">
+                    <button type="submit"
+                            class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Generate Report
+                    </button>
+                </div>
             </div>
         </form>
 
-        <h2>Available Financial Reports:</h2>
+        <h3 class="text-xl font-semibold text-gray-700 mb-4">Available Reports:</h3>
         {% if files %}
-            {% for year, year_files in files.items() %}
-                <div class="financial-year-section">
-                    <h3>Reports for {{ year }}:</h3>
-                    <ul class="report-list">
-                        {% for file in year_files %}
-                            <li>
-                                <a href="{{ file.webViewLink }}" target="_blank">{{ file.name }}</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </div>
+            {% for year, reports in files.items() %}
+                <h4 class="text-lg font-semibold text-gray-600 mt-4 mb-2">{{ year }}</h4>
+                <ul class="space-y-2 mb-4">
+                    {% for file in reports %}
+                        <li class="flex items-center bg-blue-50 p-3 rounded-md shadow-sm">
+                            <svg class="w-5 h-5 text-blue-600 mr-3" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.414L14.586 5A2 2 0 0115 6.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 10a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0-3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm0-3a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1z" clip-rule="evenodd"></path></svg>
+                            <a href="{{ file.webViewLink }}" target="_blank" class="text-blue-700 hover:underline font-medium">
+                                {{ file.name }}
+                            </a>
+                        </li>
+                    {% endfor %}
+                </ul>
             {% endfor %}
         {% else %}
-            <p class="no-reports-message">No financial report files are currently available for the selected entity or year.</p>
+            <p class="text-gray-600 text-center">No financial report files are currently available for the selected year or entity.</p>
         {% endif %}
 
-        <a href="{{ url_for('select_report') }}" class="back-link">Back to Report Selection</a>
+        <h3 class="text-xl font-semibold text-gray-700 mt-8 mb-4">Data Overview:</h3>
+        {% if data %}
+            <div class="overflow-x-auto rounded-lg border border-gray-200">
+                <table class="table-auto min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            {% for key in data[0].keys() %}
+                                {% if key != 'Username' and key != 'PatientID' %} {# Do not display 'Username' or 'PatientID' #}
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ key | replace('_', ' ') | title }}</th>
+                                {% endif %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for row in data %}
+                            <tr>
+                                {% for key, value in row.items() %}
+                                    {% if key != 'Username' and key != 'PatientID' %} {# Do not display 'Username' or 'PatientID' #}
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ value }}</td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p class="text-gray-600 text-center">No tabular data available for your selected entity or report type.</p>
+        {% endif %}
     </div>
+    {% endblock %}
 </body>
 </html>
 
