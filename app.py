@@ -97,6 +97,10 @@ df = pd.DataFrame() # Initialize as empty to avoid error if file not found
 try:
     df = pd.read_csv('data.csv', parse_dates=['Date']) # Parse 'Date' column as datetime objects
     print("data.csv loaded successfully.")
+    # --- NEW DEBUGGING PRINT STATEMENTS BELOW ---
+    print(f"DataFrame head:\n{df.head()}")
+    print(f"Unique Entities in DataFrame: {df['Entity'].unique().tolist()}")
+    # --- END NEW DEBUGGING PRINT STATEMENTS ---
 except FileNotFoundError:
     print("Error: data.csv not found. Please ensure the file is in the same directory as app.py. Dummy data will be created.")
 except Exception as e:
@@ -188,7 +192,6 @@ def login():
                 return redirect(url_for('select_report'))
             else:
                 error_message = 'Invalid username or password.'
-    
     return render_template('login.html', error=error_message, selected_role=selected_role)
 
 @app.route('/register_physician', methods=['GET', 'POST'])
@@ -382,8 +385,8 @@ def dashboard():
 
     if selected_entity and selected_entity not in user_authorized_entities:
         if not user_authorized_entities:
-             flash("You do not have any entities assigned to view reports. Please contact support.", "error")
-             return render_template('unauthorized.html', message="You do not have any entities assigned to view reports. Please contact support.")
+            flash("You do not have any entities assigned to view reports. Please contact support.", "error")
+            return render_template('unauthorized.html', message="You do not have any entities assigned to view reports. Please contact support.")
         flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity.", "error")
         return render_template(
             'select_report.html',
