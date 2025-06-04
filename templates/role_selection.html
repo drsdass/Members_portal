@@ -3,26 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Role</title>
+    <title>Select Your Role</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(to bottom right, #f0f4f8, #d9e2ec); /* Subtle gradient background */
+        }
+        .container-card {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05); /* Deeper shadow */
+            transition: transform 0.3s ease-in-out;
+        }
+        .container-card:hover {
+            transform: translateY(-3px); /* Slight lift on hover */
+        }
+        .role-button {
+            transition: all 0.2s ease-in-out;
+            border-radius: 0.5rem; /* More rounded corners */
+            font-weight: 600; /* Slightly bolder text */
+            letter-spacing: 0.025em; /* Subtle letter spacing */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Button shadow */
+        }
+        .role-button:hover {
+            transform: translateY(-2px) scale(1.01); /* Lift and slight scale on hover */
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15); /* More pronounced shadow on hover */
+        }
         /* Flash message styling */
         .flash-message {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
+            position: relative; /* Changed to relative for in-flow */
             padding: 0.75rem 1.25rem;
             border-radius: 0.375rem;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            z-index: 1000;
-            opacity: 1;
-            transition: opacity 0.5s ease-in-out;
-        }
-        .flash-message.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            margin-bottom: 1rem; /* Add margin below flash message */
         }
         .flash-message.error {
             background-color: #f8d7da;
@@ -31,52 +44,41 @@
         }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <!-- Flash Messages Container -->
-    <div id="flash-messages">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="flash-message {{ category }}">
-                        {{ message }}
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-    </div>
+<body class="flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white p-10 rounded-xl container-card w-full max-w-md text-center">
+        <div class="mb-8">
+            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo"
+                 class="mx-auto" style="max-width: 180px; height: auto; border-radius: 10px; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">
+        </div>
 
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Select Your Role</h2>
+        <h2 class="text-3xl font-extrabold text-gray-900 mb-6">Welcome!</h2>
+        <p class="text-lg text-gray-700 mb-8">Please select your role to proceed to the Members Portal.</p>
+
         {% if error %}
-            <p class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4 text-center">{{ error }}</p>
+            <p class="flash-message error">{{ error }}</p>
         {% endif %}
-        <form action="/select_role" method="post" class="space-y-6">
-            <button type="submit" name="role" value="members"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Members Portal
+
+        <form action="{{ url_for('select_role') }}" method="post" class="space-y-5">
+            <button type="submit" name="role" value="physician_provider"
+                    class="role-button w-full flex justify-center py-3 px-4 border border-transparent text-lg text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                Physician/Provider
             </button>
-            <button type="submit" name="role" value="sales_marketing"
-                    class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                Sales & Marketing Portal
+            <button type="submit" name="role" value="patient"
+                    class="role-button w-full flex justify-center py-3 px-4 border border-transparent text-lg text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                Patient
+            </button>
+            <button type="submit" name="role" value="business_dev_manager"
+                    class="role-button w-full flex justify-center py-3 px-4 border border-transparent text-lg text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500">
+                Business Development Manager
+            </button>
+            <button type="submit" name="role" value="admin"
+                    class="role-button w-full flex justify-center py-3 px-4 border border-transparent text-lg text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                Admin
             </button>
         </form>
+        <div class="mt-8">
+            <a href="{{ url_for('logout') }}" class="text-gray-600 hover:underline text-sm font-medium">Logout</a>
+        </div>
     </div>
-
-    <script>
-        // Auto-hide flash messages after a few seconds
-        document.addEventListener('DOMContentLoaded', function() {
-            const flashMessages = document.querySelectorAll('.flash-message');
-            flashMessages.forEach(function(message) {
-                setTimeout(function() {
-                    message.style.opacity = '0';
-                    setTimeout(function() {
-                        message.remove();
-                    }, 500); // Remove after fade out
-                }, 5000); // 5 seconds
-            });
-        });
-    </script>
 </body>
 </html>
-
-
