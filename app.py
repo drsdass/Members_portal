@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from flask import Flask, render_template, request, redirect, session, url_for
+from flask import Flask, render_template, request, redirect, session, url_for, flash # Import flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import re # Import the regular expression module
@@ -98,9 +98,10 @@ def select_role():
         selected_role = request.form.get('role')
         if selected_role in ['members', 'sales_marketing']:
             session['selected_role'] = selected_role
+            flash(f"Role '{selected_role.replace('_', ' ').title()}' selected successfully. Please log in.", 'success') # Added flash message
             return redirect(url_for('login'))
         else:
-            # Handle invalid role selection, though buttons should prevent this
+            flash("Invalid role selected. Please try again.", 'error') # Added flash message
             return render_template('role_selection.html', error="Invalid role selected.")
     return render_template('role_selection.html')
 
@@ -123,8 +124,10 @@ def login():
         if user_info and user_info.get('role') == session['selected_role'] and check_password_hash(user_info['password_hash'], password):
             session['username'] = username
             session['user_role'] = user_info['role'] # Store the user's role in session
+            flash(f"Welcome, {username}! You are logged in as a {user_info['role'].replace('_', ' ').title()}.", 'success') # Added flash message
             return redirect(url_for('select_report'))
         else:
+            flash('Invalid username or password.', 'error') # Added flash message
             return render_template('login.html', error='Invalid username or password.'), 401
     
     # For GET request, render login form
@@ -165,17 +168,19 @@ def select_report():
         selected_year = request.form.get('year')
 
         if not report_type or not selected_entity:
+            flash("Please select both a report type and an entity.", 'error') # Added flash message
             return render_template(
                 'select_report.html',
                 master_entities=display_entities, # Use filtered entities here
                 available_report_types=available_report_types, # Pass filtered report types
                 months=months,
                 years=years,
-                error="Please select both a report type and an entity."
+                error="Please select both a report type and an entity." # Keep for now, flash message is primary
             )
 
         # Authorization check: Ensure the selected entity is one the user is authorized for
         if selected_entity not in user_authorized_entities:
+            flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity.", 'error') # Added flash message
             return render_template(
                 'unauthorized.html',
                 message=f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity."
@@ -239,17 +244,19 @@ def dashboard():
     user_authorized_entities = users[rep]['entities']
     if selected_entity not in user_authorized_entities:
         if not user_authorized_entities:
+             flash(f"You do not have any entities assigned to view reports. Please contact support.", 'error') # Added flash message
              return render_template(
                 'unauthorized.html',
                 message=f"You do not have any entities assigned to view reports. Please contact support."
             )
+        flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for.", 'error') # Added flash message
         return render_template(
             'select_report.html', # Redirect back to selection if not authorized for entity
             master_entities=[entity for entity in MASTER_ENTITIES if entity in user_authorized_entities], # Pass authorized entities
             available_report_types=REPORT_TYPES_BY_ROLE.get(users[rep]['role'], []), # Pass role-specific reports
             months=months,
             years=years,
-            error=f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for."
+            error=f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for." # Keep for now
         )
 
     filtered_data = pd.DataFrame()
@@ -361,6 +368,7 @@ def dashboard():
 @app.route('/logout')
 def logout():
     session.clear()
+    flash("You have been logged out.", 'info') # Added flash message
     return redirect(url_for('login'))
 
 # --- Run the application and create dummy files ---
