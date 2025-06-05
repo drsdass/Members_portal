@@ -52,7 +52,7 @@ users = {
 
     # Physician/Provider (email based login)
     'dr.smith@example.com': {'password_hash': generate_password_hash('provider123'), 'entities': ['First Bio Lab'], 'role': 'physician_provider'},
-    'dr.jones@example.com': {'password_hash': generate_password_hash('provider123'), 'entities': ['AIM Laboratories LLC'], 'role': 'physician_provider'},
+    'dr.jones@example.2com': {'password_hash': generate_password_hash('provider123'), 'entities': ['AIM Laboratories LLC'], 'role': 'physician_provider'}, # Changed to .2com to avoid conflict
 
     # Patient (login handled separately by last_name, dob, ssn4)
     # The 'entities' here could represent the entities they have results from, but not used for login.
@@ -94,7 +94,7 @@ if not os.path.exists('data.csv'):
             1000, 1200, 800, 1500, 2000, 900, 1100, 1300,
             1050, 850, 1600, 2100, 950, 1150, 1350,
             1800, # AndrewS test
-            2200 # AndrewS, MelindaC test
+            2200, # AndrewS, MelindaC test
         ],
         'RepName': [ # For display in the table
             'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
