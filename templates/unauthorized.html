@@ -5,69 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Unauthorized Access</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-            /* Subtle gradient background for a modern feel */
-            background: linear-gradient(to bottom right, #f0f4f8, #d9e2ec);
+        body { font-family: 'Inter', sans-serif; }
+        .btn {
+            @apply px-6 py-3 rounded-lg font-semibold text-lg transition-all duration-300 ease-in-out;
         }
-        /* Card styling with a softer, deeper shadow and subtle hover effect */
-        .container-card {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease-in-out;
+        .btn-primary {
+            @apply bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md hover:shadow-lg;
         }
-        .container-card:hover {
-            transform: translateY(-3px); /* Slight lift on hover */
-        }
-        /* Button styling with transition for hover effects */
-        .button-primary {
-            transition: all 0.2s ease-in-out;
-        }
-        .button-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        /* Custom animation for the warning icon */
-        @keyframes bounce-subtle {
-            0%, 100% {
-                transform: translateY(0);
-            }
-            50% {
-                transform: translateY(-5px);
-            }
-        }
-        .animate-bounce-subtle {
-            animation: bounce-subtle 1.5s infinite;
+        .link-text {
+            @apply text-blue-600 hover:underline;
         }
     </style>
 </head>
-<body class="flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white p-10 rounded-xl container-card w-full max-w-md text-center">
-        <div class="mb-8">
-            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo"
-                 class="mx-auto" style="max-width: 180px; height: auto; border-radius: 10px; box-shadow: 0 6px 12px rgba(0,0,0,0.15);">
-        </div>
-
-        <div class="mb-6 flex flex-col items-center">
-            <svg class="h-16 w-16 text-red-500 mb-4 animate-bounce-subtle" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-            </svg>
-            <h2 class="text-4xl font-extrabold text-gray-900 mb-3">Access Denied!</h2>
-            <p class="text-lg text-gray-600">
-                {% if message %}
-                    <strong class="text-red-700">{{ message }}</strong>
-                {% else %}
-                    You do not have permission to view this page or perform this action.
-                {% endif %}
-            </p>
-        </div>
-
-        <a href="{{ url_for('logout') }}"
-           class="button-primary inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-lg shadow-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path></svg>
-            Go to Login
-        </a>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md text-center">
+        <h1 class="text-4xl font-extrabold text-red-700 mb-4">Access Denied!</h1>
+        <p class="text-lg text-gray-700 mb-6">{{ message | default("You do not have permission to view this page or report.") }}</p>
+        <a href="/logout" class="btn btn-primary">Go to Login</a>
     </div>
 </body>
 </html>
