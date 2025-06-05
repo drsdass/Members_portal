@@ -3,7 +3,7 @@ import pandas as pd
 from flask import Flask, render_template, request, redirect, session, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
-import re
+import re # Import the regular expression module
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -11,15 +11,16 @@ app = Flask(__name__)
 # --- Configuration ---
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_random_key_here_replace_me_in_production')
 
-# --- Master List of All Entities ---
+# --- Master List of All Entities (RESTRICTED to the 7 core company/lab entities, updated with LLC) ---
 MASTER_ENTITIES = sorted([
     'First Bio Lab',
-    'First Bio Genetics LLC',
+    'First Bio Genetics LLC', # Updated based on file names
     'First Bio Lab of Illinois',
-    'AIM Laboratories LLC',
-    'AMICO Dx LLC',
-    'Enviro Labs LLC',
-    'Stat Labs'
+    'AIM Laboratories LLC', # Updated based on file names
+    'AMICO DX LLC', # Updated based on file names
+    'AMICO Dx', # Keeping this for now as it was in the original list, but actual files use LLC
+    'Enviro Labs LLC', # Updated based on file names
+    'Stat Labs' # Updated based on file names
 ])
 
 # --- Users with Unfiltered Access (for monthly bonus reports - remains unchanged) ---
@@ -32,694 +33,547 @@ UNFILTERED_ACCESS_USERS = ['SatishD', 'AshlieT', 'MinaK', 'BobS']
 users = {
     # Full Access Admins (those explicitly confirmed for full access in previous turns)
     'SatishD': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'AshlieT': {'password_hash': generate_password_hash('password3'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'MinaK': {'password_hash': generate_password_hash('password5'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'BobS': {'password_hash': generate_password_hash('password15'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'Omar': {'password_hash': generate_password_hash('password12'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'DarangT': {'password_hash': generate_password_hash('password14'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
-    'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
+    'AshlieT': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
+    'MinaK': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
+    'BobS': {'password_hash': generate_password_hash('password1'), 'entities': MASTER_ENTITIES, 'role': 'admin'},
 
-    # Admins with Specific Limited Access (based on your latest instructions)
-    'AghaA': {'password_hash': generate_password_hash('agapass'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin'},
-    'Wenjun': {'password_hash': generate_password_hash('wenpass'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin'},
-    'AndreaM': {'password_hash': generate_password_hash('andreapass'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin'},
-    'BenM': {'password_hash': generate_password_hash('benpass'), 'entities': ['Enviro Labs LLC'], 'role': 'admin'},
-    'SonnyA': {'password_hash': generate_password_hash('password11'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin', 'email': 'sonnya@example.com'},
-    'NickC': {'password_hash': generate_password_hash('password13'), 'entities': ['AMICO Dx LLC'], 'role': 'admin'},
-    'BobSilverang': {'password_hash': generate_password_hash('silverpass'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'Enviro Labs LLC'], 'role': 'admin'},
-    'VinceO': {'password_hash': generate_password_hash('password10'), 'entities': ['AMICO Dx LLC'], 'role': 'admin'},
-    'AndrewS': {'password_hash': generate_password_hash('password8'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'admin', 'email': 'andrews@example.com'},
+    # Representatives (with specific entity access)
+    'SonnyA': {'password_hash': generate_password_hash('password1'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC'], 'role': 'rep'},
+    'JayM': {'password_hash': generate_password_hash('password1'), 'entities': ['First Bio Lab of Illinois', 'AMICO DX LLC'], 'role': 'rep'},
+    'VinceO': {'password_hash': generate_password_hash('password1'), 'entities': ['Stat Labs', 'Enviro Labs LLC'], 'role': 'rep'},
+    'NickC': {'password_hash': generate_password_hash('password1'), 'entities': ['AIM Laboratories LLC'], 'role': 'rep'},
+    'Omar': {'password_hash': generate_password_hash('password1'), 'entities': ['First Bio Lab'], 'role': 'rep'},
+    'DarangT': {'password_hash': generate_password_hash('password1'), 'entities': ['First Bio Genetics LLC'], 'role': 'rep'},
 
-    # Existing users not explicitly mentioned in the latest list (retain their existing roles/access)
-    'Andrew_Phys': {'password_hash': generate_password_hash('password7'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'admin', 'email': 'andrew@example.com'},
-    'PhysicianUser1': {'password_hash': generate_password_hash('physicianpass'), 'entities': ['First Bio Lab'], 'role': 'physician_provider', 'email': 'physician1@example.com'},
-    'JayM': {'password_hash': generate_password_hash('password6'), 'entities': ['AIM Laboratories LLC', 'First Bio Genetics LLC'], 'role': 'rep'}, # Changed role from admin to rep as per previous turns
+    # Business Development Manager (Access to a subset of entities)
+    'ACG': {'password_hash': generate_password_hash('password1'), 'entities': ['First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC'], 'role': 'business_dev_manager'},
+    'AndrewS': {'password_hash': generate_password_hash('password1'), 'entities': ['First Bio Lab', 'AMICO DX LLC'], 'role': 'business_dev_manager'},
+    'MelindaC': {'password_hash': generate_password_hash('password1'), 'entities': ['Stat Labs'], 'role': 'business_dev_manager'},
 
-    # Patient users (no change)
-    'House_Patient': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'House', 'dob': '1980-05-15', 'ssn4': '1234', 'patient_id': 'PAT001'}},
-    'PatientUser1': {'password_hash': generate_password_hash('patientpass'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'Doe', 'dob': '1990-01-01', 'ssn4': '5678', 'patient_id': 'PAT002'}},
+    # Physician/Provider (email based login)
+    'dr.smith@example.com': {'password_hash': generate_password_hash('provider123'), 'entities': ['First Bio Lab'], 'role': 'physician_provider'},
+    'dr.jones@example.com': {'password_hash': generate_password_hash('provider123'), 'entities': ['AIM Laboratories LLC'], 'role': 'physician_provider'},
+
+    # Patient (login handled separately by last_name, dob, ssn4)
+    # The 'entities' here could represent the entities they have results from, but not used for login.
+    'P001': {'last_name': 'Doe', 'dob': '1990-01-15', 'ssn4': '1234', 'role': 'patient', 'entities': ['First Bio Lab']},
+    'P002': {'last_name': 'Smith', 'dob': '1985-05-20', 'ssn4': '5678', 'role': 'patient', 'entities': ['AIM Laboratories LLC']},
 }
 
-# --- Define Report Types by Role ---
-REPORT_TYPES_BY_ROLE = {
-    'admin': [
-        {'value': 'financials', 'name': 'Financials Report'},
-        {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'},
-        {'value': 'requisitions', 'name': 'Requisitions'},
-        {'value': 'marketing_material', 'name': 'Marketing Material'},
-        {'value': 'patient_reports', 'name': 'Patient Specific Reports'}
-    ],
-    'physician_provider': [
-        {'value': 'requisitions', 'name': 'Requisitions'},
-        {'value': 'patient_reports', 'name': 'Patient Specific Reports'}
-    ],
-    'patient': [
-        {'value': 'patient_reports', 'name': 'Patient Specific Reports'}
-    ],
-    'rep': [ # Added 'rep' role as per previous turns
-        {'value': 'financials', 'name': 'Financials'},
-        {'value': 'requisitions', 'name': 'Requisitions'},
-        {'value': 'marketing_material', 'name': 'Marketing Material'}
-    ],
-    'business_dev_manager': [
-        {'value': 'requisitions', 'name': 'Requisitions'},
-        {'value': 'marketing_material', 'name': 'Marketing Material'},
-        {'value': 'monthly_bonus', 'name': 'Monthly Bonus Report'}
-    ]
-}
-
-# --- Financial Report Definitions (for generating entity-specific filenames and display names) ---
-FINANCIAL_REPORT_DEFINITIONS = [
-    {'display_name_part': 'Profit and Loss account', 'basis': 'Accrual Basis', 'file_suffix': '-Profit and Loss account - Accrual basis'},
-    {'display_name_part': 'Profit and Loss account', 'basis': 'Cash Basis', 'file_suffix': '-Profit and Loss account - Cash Basis'},
-    {'display_name_part': 'Balance Sheet', 'basis': 'Accrual Basis', 'file_suffix': '-Balance Sheet - Accrual Basis'},
-    {'display_name_part': 'Balance Sheet', 'basis': 'Cash Basis', 'file_suffix': '-Balance Sheet - Cash Basis'},
-    {'display_name_part': 'YTD Management Report', 'basis': 'Cash Basis', 'file_suffix': '-YTD Management Report - Cash Basis', 'applicable_years': [2025]}
-]
-
-
-# --- Dummy Data for Reports (ensure this is consistent with your actual data.csv) ---
-# This dictionary will hold dummy data for various reports.
-# In a real application, this would come from a database or external files.
-dummy_data = {
-    'ReportID': [
-        'R001', 'R002', 'R003', 'R004', 'R005',
-        'R006', 'R007', 'R008', 'R009', 'R010',
-        'R011', 'R012', 'R013', 'R014', 'R015',
-        'R016', # For bonus report
-        'R017', # For AndrewS specific report
-        'R018' # For multi-user test
-    ],
-    'ReportName': [
-        'Monthly Sales Report', 'Quarterly Financials', 'Annual Performance Review', 'Marketing Campaign Analysis', 'HR Onboarding Metrics',
-        'Lab Test Results', 'Clinical Trial Data', 'Research Study Findings', 'Patient Demographics', 'Inventory Audit',
-        'Supply Chain Efficiency', 'Customer Feedback Analysis', 'Website Traffic Report', 'Server Health Check', 'Network Security Audit',
-        'Bonus Report Q1', # Example for bonus report
-        'AndrewS Special Report', # Specific report for AndrewS
-        'Joint Project Report' # Report for AndrewS, MelindaC
-    ],
-    'ReportDate': [
-        '2024-05-01', '2024-04-15', '2024-03-31', '2024-05-10', '2024-04-20',
-        '2024-05-02', '2024-04-25', '2024-03-10', '2024-05-05', '2024-04-01',
-        '2024-05-12', '2024-04-05', '2024-03-15', '2024-05-08', '2024-04-12',
-        '2024-03-01', # Date for bonus report
-        '2024-05-15', # Date for AndrewS report
-        '2024-05-20' # Date for multi-user report
-    ],
-    'Entity': [ # This column determines which entity the report belongs to
-        'First Bio Lab', 'First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC',
-        'AMICO Dx LLC', 'Enviro Labs LLC', 'Stat Labs', 'First Bio Lab', 'First Bio Genetics LLC',
-        'First Bio Lab of Illinois', 'AIM Laboratories LLC', 'AMICO Dx LLC', 'Enviro Labs LLC', 'Stat Labs',
-        'First Bio Lab', # Entity for bonus report
-        'First Bio Lab', # Entity for AndrewS report
-        'First Bio Lab' # Entity for multi-user report
-    ],
-    'AccessLevel': [ # This column is for display in the table
-        'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
-        'Satish D', 'ACG', 'Melinda C', 'Mina K',
-        'Vince O', 'Nick C',
-        'Ashlie T', 'Omar', 'Darang T',
-        'Andrew', 'Jay M',
-        'Andrew S', # Specific row for AndrewS bonus report test
-        'Andrew S, Melinda C' # New row for multi-user test
-    ],
-    'Username': [ # NEW COLUMN - For filtering, must match login username
-        'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
-        'SatishD', 'ACG', 'MelindaC', 'MinaK',
-        'VinceO', 'NickC',
-        'AshlieT', 'Omar', 'DarangT',
-        'Andrew', 'JayM',
-        'AndrewS', # Matches AndrewS login username
-        'AndrewS,MelindaC' # Allows both AndrewS and MelindaC to see this line
-    ],
-    'PatientID': [
-        'PAT001', 'PAT001', 'N/A', 'N/A', 'N/A', # Added PAT001 for House_Patient
-        'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-        'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-        'N/A',
-        'N/A',
-        'N/A',
-    ],
-    'PatientLastName': [
-        'House', 'House', 'N/A', 'N/A', 'N/A', # Added House for House_Patient
-        'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-        'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-        'N/A',
-        'N/A',
-        'N/A',
-    ],
-    'PatientDOB': [
-        '1980-05-15', '1980-05-15', 'N/A', 'N/A', 'N/A', # Added DOB for House_Patient
-        'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-        'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-        'N/A',
-        'N/A',
-        'N/A',
-    ],
-    'ReportFile': [ # Dummy file names for demonstration
-        'report_R001.pdf', 'report_R002.pdf', 'report_R003.pdf', 'report_R004.pdf', 'report_R005.pdf',
-        'report_R006.pdf', 'report_R007.pdf', 'report_R008.pdf', 'report_R009.pdf', 'report_R010.pdf',
-        'report_R011.pdf', 'report_R012.pdf', 'report_R013.pdf', 'report_R014.pdf', 'report_R015.pdf',
-        'report_R016.pdf',
-        'report_R017.pdf',
-        'report_R018.pdf',
-    ]
-}
-dummy_df = pd.DataFrame(dummy_data)
-dummy_df.to_csv('data.csv', index=False)
-print("Created dummy data.csv for demonstration.")
+# --- Dummy Data Generation (for demonstration) ---
+# Create a dummy data.csv if it doesn't exist for monthly bonus reports
+if not os.path.exists('data.csv'):
+    dummy_data = {
+        'Entity': [
+            'First Bio Lab', 'First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois',
+            'AIM Laboratories LLC', 'AMICO Dx LLC', 'Enviro Labs LLC', 'Stat Labs',
+            'First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab', 'AMICO Dx LLC',
+            'AIM Laboratories LLC', 'First Bio Lab', 'First Bio Genetics LLC',
+            'First Bio Lab', # For AndrewS specific bonus report test
+            'AMICO DX LLC', # For AndrewS, MelindaC specific bonus report test
+        ],
+        'Month': [
+            'January', 'February', 'January', 'February', 'January', 'February', 'January', 'February',
+            'March', 'March', 'April', 'April', 'March', 'May', 'May',
+            'January', # AndrewS test
+            'February' # AndrewS, MelindaC test
+        ],
+        'Year': [
+            2023, 2023, 2023, 2023, 2023, 2023, 2024, 2024,
+            2024, 2024, 2024, 2024, 2025, 2025, 2025,
+            2024, # AndrewS test
+            2024 # AndrewS, MelindaC test
+        ],
+        'Total Revenue': [
+            10000, 12000, 8000, 15000, 20000, 9000, 11000, 13000,
+            10500, 8500, 16000, 21000, 9500, 11500, 13500,
+            18000, # AndrewS test
+            22000 # AndrewS, MelindaC test
+        ],
+        'Bonus': [
+            1000, 1200, 800, 1500, 2000, 900, 1100, 1300,
+            1050, 850, 1600, 2100, 950, 1150, 1350,
+            1800, # AndrewS test
+            2200 # AndrewS, MelindaC test
+        ],
+        'RepName': [ # For display in the table
+            'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
+            'Satish D', 'ACG', 'Melinda C', 'Mina K',
+            'Vince O', 'Nick C',
+            'Ashlie T', 'Omar', 'Darang T',
+            'Andrew', 'Jay M',
+            'Andrew S', # Specific row for AndrewS bonus report test
+            'Andrew S, Melinda C' # New row for multi-user test
+        ],
+        'Username': [ # NEW COLUMN - For filtering, must match login username
+            'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
+            'SatishD', 'ACG', 'MelindaC', 'MinaK',
+            'VinceO', 'NickC',
+            'AshlieT', 'Omar', 'DarangT',
+            'Andrew', 'JayM',
+            'AndrewS', # Matches AndrewS login username
+            'AndrewS,MelindaC' # Allows both AndrewS and MelindaC to see this line
+        ],
+        'PatientID': [ # For patient-specific filtering, N/A for non-patient reports
+            'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
+            'N/A', 'N/A', 'N/A', 'N/A',
+            'N/A', 'N/A',
+            'N/A', 'N/A', 'N/A',
+            'N/A', 'N/A',
+            'N/A',
+            'N/A'
+        ]
+    }
+    dummy_df = pd.DataFrame(dummy_data)
+    dummy_df.to_csv('data.csv', index=False)
+    print("Created dummy data.csv for demonstration.")
 
 # Create dummy patient_data.csv if it doesn't exist
 if not os.path.exists('patient_data.csv'):
     patient_dummy_data = {
-        'PatientID': ['PAT001', 'PAT001', 'PAT002', 'PAT001'],
-        'PatientLastName': ['House', 'House', 'Doe', 'House'],
-        'PatientDOB': ['1980-05-15', '1980-05-15', '1990-01-01', '1980-05-15'],
-        'DateOfService': ['2024-05-01', '2024-04-10', '2024-05-05', '2024-03-20'],
-        'ReportName': ['Comprehensive Metabolic Panel', 'Complete Blood Count', 'Thyroid Panel', 'Urinalysis'],
+        'PatientID': ['P001', 'P001', 'P002', 'P001', 'P001'],
+        'PatientLastName': ['Doe', 'Doe', 'Smith', 'Doe', 'Doe'],
+        'PatientDOB': ['1990-01-15', '1990-01-15', '1985-05-20', '1990-01-15', '1990-01-15'],
+        'DateOfService': ['2024-05-01', '2024-04-10', '2024-05-05', '2024-03-20', '2024-05-15'],
+        'ReportName': ['Comprehensive Metabolic Panel', 'Complete Blood Count', 'Thyroid Panel', 'Urinalysis', 'Lipid Panel'],
         'ReportFile': [
-            'patient_report_PAT001_CMP_20240501.pdf',
-            'patient_report_PAT001_CBC_20240410.pdf',
-            'patient_report_PAT002_Thyroid_20240505.pdf',
-            'patient_report_PAT001_Urinalysis_20240320.pdf'
+            'patient_report_P001_CMP_20240501.pdf',
+            'patient_report_P001_CBC_20240410.pdf',
+            'patient_report_P002_Thyroid_20240505.pdf',
+            'patient_report_P001_Urinalysis_20240320.pdf',
+            'patient_report_P001_Lipid_20240515.pdf'
         ],
-        'Username': ['House_Patient', 'House_Patient', 'PatientUser1', 'House_Patient'] # This will be the patient's username for login
+        'Entity': ['First Bio Lab', 'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Lab', 'First Bio Lab']
     }
-    patient_dummy_df = pd.DataFrame(patient_dummy_data)
-    patient_dummy_df.to_csv('patient_data.csv', index=False)
+    patient_df = pd.DataFrame(patient_dummy_data)
+    patient_df.to_csv('patient_data.csv', index=False)
     print("Created dummy patient_data.csv for demonstration.")
-else:
-    print("patient_data.csv already exists.")
 
+# --- Helper Functions ---
+def get_user_entities(username):
+    """Retrieves entities accessible by a given username."""
+    user_info = users.get(username)
+    if user_info and 'entities' in user_info:
+        return user_info['entities']
+    return []
 
-# --- Data Loading (Optimized: Load once at app startup) ---
-# Initialize as empty to avoid error if file not found
-df = pd.DataFrame()
-patient_df = pd.DataFrame()
+def get_current_year():
+    return datetime.datetime.now().year
 
-try:
-    df = pd.read_csv('data.csv', parse_dates=['ReportDate']) # Changed 'Date' to 'ReportDate' to match dummy_data
-    print("data.csv loaded successfully.")
-except FileNotFoundError:
-    print("Error: data.csv not found. Please ensure the file is in the same directory as app.py. Dummy data will be created.")
-    df = pd.DataFrame(dummy_data) # Fallback to dummy data if file not found
-except Exception as e:
-    print(f"An error occurred while loading data.csv: {e}")
+def get_available_years():
+    # Example: current year and one year back/forward
+    current_year = get_current_year()
+    return sorted(list(set([current_year, current_year - 1, current_year + 1])))
 
-try:
-    patient_df = pd.read_csv('patient_data.csv', parse_dates=['DateOfService'])
-    print("patient_data.csv loaded successfully.")
-except FileNotFoundError:
-    print("Error: patient_data.csv not found. Please ensure the file is in the same directory as app.py. Dummy patient data will be created.")
-    patient_df = pd.DataFrame(patient_dummy_data) # Fallback to dummy data if file not found
-except Exception as e:
-    print(f"An error occurred while loading patient_data.csv: {e}")
+def get_months():
+    return [
+        {'name': 'January', 'value': 'January'},
+        {'name': 'February', 'value': 'February'},
+        {'name': 'March', 'value': 'March'},
+        {'name': 'April', 'value': 'April'},
+        {'name': 'May', 'value': 'May'},
+        {'name': 'June', 'value': 'June'},
+        {'name': 'July', 'value': 'July'},
+        {'name': 'August', 'value': 'August'},
+        {'name': 'September', 'value': 'September'},
+        {'name': 'October', 'value': 'October'},
+        {'name': 'November', 'value': 'November'},
+        {'name': 'December', 'value': 'December'},
+    ]
 
-
-# --- Helper function to get available report types for a user role ---
-def get_available_report_types(user_role):
-    """Returns the list of report types available for a given user role."""
-    return REPORT_TYPES_BY_ROLE.get(user_role, [])
-
-# --- Routes ---
+# --- Flask Routes ---
 
 @app.route('/')
 def index():
-    """Redirects to the role selection page."""
+    if 'username' in session or 'patient_id' in session:
+        return redirect(url_for('dashboard'))
     return redirect(url_for('select_role'))
 
 @app.route('/select_role', methods=['GET', 'POST'])
 def select_role():
-    """Allows user to select their role."""
+    session.pop('username', None) # Clear previous sessions
+    session.pop('patient_id', None)
+    session.pop('selected_role', None)
+
     if request.method == 'POST':
         selected_role = request.form.get('role')
-        # Validate the new role names
-        if selected_role in ['physician_provider', 'patient', 'business_dev_manager', 'admin', 'rep']:
+        if selected_role:
             session['selected_role'] = selected_role
-            return redirect(url_for('login'))
+            if selected_role == 'patient':
+                return redirect(url_for('login', role=selected_role))
+            elif selected_role == 'physician_provider':
+                return redirect(url_for('login', role=selected_role))
+            else: # Admin, Rep, Business Dev Manager
+                return redirect(url_for('login', role=selected_role))
         else:
-            flash("Invalid role selected.", "error")
-            return render_template('role_selection.html')
+            flash('Please select a role.', 'error')
     return render_template('role_selection.html')
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    """
-    Handles user login after a role has been selected.
-    Login logic varies based on the selected role (patient, physician, other).
-    """
-    if 'selected_role' not in session:
+    selected_role = session.get('selected_role')
+    if not selected_role:
         return redirect(url_for('select_role'))
 
-    selected_role = session['selected_role']
-    error_message = None
-
+    error = None
     if request.method == 'POST':
         if selected_role == 'patient':
-            # Patient login uses Last Name, DOB, SSN4
-            last_name = request.form.get('last_name')
-            dob = request.form.get('dob')
-            ssn4 = request.form.get('ssn4')
+            last_name = request.form['last_name'].strip()
+            dob = request.form['dob'].strip()
+            ssn4 = request.form['ssn4'].strip()
 
-            found_patient = False
-            for username_key, user_info in users.items():
-                if user_info.get('role') == 'patient':
-                    patient_details = user_info.get('patient_details')
-                    if patient_details and \
-                       patient_details['last_name'].lower() == last_name.lower() and \
-                       patient_details['dob'] == dob and \
-                       patient_details['ssn4'] == ssn4:
-                        session['username'] = username_key
-                        session['patient_id'] = patient_details['patient_id']
-                        found_patient = True
-                        break
-            
-            if found_patient:
-                flash('Patient login successful!', 'success')
-                return redirect(url_for('patient_results'))
-            else:
-                error_message = 'Invalid patient details.'
-                flash(error_message, 'danger')
+            # Find patient by last_name, dob, and ssn4
+            patient_found = False
+            for patient_id, patient_info in users.items():
+                if patient_info['role'] == 'patient' and \
+                   patient_info['last_name'].lower() == last_name.lower() and \
+                   patient_info['dob'] == dob and \
+                   patient_info['ssn4'] == ssn4:
+                    session['patient_id'] = patient_id
+                    session['username'] = last_name # Storing last_name as username for display purposes
+                    flash('Logged in successfully as Patient!', 'success')
+                    return redirect(url_for('patient_results'))
+            error = 'Invalid patient credentials.'
+
         elif selected_role == 'physician_provider':
-            # Physician/Provider login uses Email and Password
-            email = request.form.get('email')
-            password = request.form.get('password')
-            
-            found_physician = False
-            for username_key, user_info in users.items():
-                if user_info.get('role') == 'physician_provider' and user_info.get('email') and user_info['email'].lower() == email.lower():
-                    if check_password_hash(user_info['password_hash'], password):
-                        session['username'] = username_key
-                        found_physician = True
-                        break
-            
-            if found_physician:
-                flash('Physician login successful!', 'success')
+            email = request.form['email'].strip()
+            password = request.form['password'].strip()
+            user_info = users.get(email)
+            if user_info and user_info['role'] == 'physician_provider' and check_password_hash(user_info['password_hash'], password):
+                session['username'] = email
+                flash('Logged in successfully as Physician/Provider!', 'success')
                 return redirect(url_for('select_report'))
             else:
-                error_message = 'Invalid email or password.'
-                flash(error_message, 'danger')
-        else:
-            # All other roles (admin, rep, and business_dev_manager) use Username and Password
-            username = request.form.get('username')
-            password = request.form.get('password')
-            
-            user_info = users.get(username)
+                error = 'Invalid email or password.'
 
-            if user_info and user_info.get('role') == selected_role and check_password_hash(user_info['password_hash'], password):
+        else: # Admin, Rep, Business Dev Manager
+            username = request.form['username'].strip()
+            password = request.form['password'].strip()
+            user_info = users.get(username)
+            if user_info and user_info['role'] == selected_role and check_password_hash(user_info['password_hash'], password):
                 session['username'] = username
-                flash('Login successful!', 'success')
+                flash(f'Logged in successfully as {selected_role.replace("_", " ").title()}!', 'success')
                 return redirect(url_for('select_report'))
             else:
-                error_message = 'Invalid username or password.'
-                flash(error_message, 'danger')
-    return render_template('login.html', error=error_message, selected_role=selected_role)
+                error = 'Invalid username or password.'
+
+    return render_template('login.html', selected_role=selected_role, error=error)
 
 @app.route('/register_physician', methods=['GET', 'POST'])
 def register_physician():
-    """Handles physician registration."""
     if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        confirm_password = request.form.get('confirm_password')
+        email = request.form['email'].strip()
+        password = request.form['password'].strip()
+        confirm_password = request.form['confirm_password'].strip()
 
-        if not email or not password or not confirm_password:
-            flash("All fields are required.", "error")
-            return render_template('register_physician.html')
-        
         if password != confirm_password:
-            flash("Passwords do not match.", "error")
+            flash('Passwords do not match.', 'error')
             return render_template('register_physician.html')
-        
-        for username_key, user_info in users.items():
-            if user_info.get('role') == 'physician_provider' and user_info.get('email') and user_info['email'].lower() == email.lower():
-                flash("Email already registered. Please login or use a different email.", "error")
-                return render_template('register_physician.html')
-        
-        # Generate a unique username key for the new physician
-        new_username_key = email.replace('@', '_').replace('.', '_') + "_phys"
-        while new_username_key in users:
-            new_username_key += "_new"
 
-        users[new_username_key] = {
+        if email in users:
+            flash('Email already registered.', 'error')
+            return render_template('register_physician.html')
+
+        # Add new physician
+        users[email] = {
             'password_hash': generate_password_hash(password),
-            'entities': [], # Newly registered physicians start with no specific entities, can be assigned later
-            'role': 'physician_provider',
-            'email': email.lower()
+            'entities': [], # Newly registered physicians start with no entity access
+            'role': 'physician_provider'
         }
-        
-        flash("Registration successful! You can now log in.", "success")
+        flash('Registration successful! Please log in.', 'success')
+        session['selected_role'] = 'physician_provider' # Set role for redirect to login
         return redirect(url_for('login'))
-
     return render_template('register_physician.html')
-
-@app.route('/patient_results')
-def patient_results():
-    """Displays patient-specific reports based on their PatientID."""
-    if 'username' not in session or users[session['username']]['role'] != 'patient':
-        flash("Access denied. Please log in as a patient.", "error")
-        return redirect(url_for('login'))
-
-    patient_username = session['username']
-    patient_id = session.get('patient_id')
-    patient_last_name = users[patient_username]['patient_details']['last_name']
-
-    # Ensure patient_df is loaded and has necessary columns
-    if patient_df.empty or 'PatientID' not in patient_df.columns or 'DateOfService' not in patient_df.columns:
-        flash("Patient data is not available or incorrectly structured. Please contact support.", "error")
-        return render_template('patient_results.html', patient_name=patient_last_name, results_by_dos={})
-
-    patient_data = patient_df[patient_df['PatientID'] == patient_id].copy()
-
-    if patient_data.empty:
-        return render_template('patient_results.html', patient_name=patient_last_name, results_by_dos={}, message="No results found for your patient ID.")
-
-    # Ensure 'DateOfService' is datetime type for sorting
-    if not pd.api.types.is_datetime64_any_dtype(patient_data['DateOfService']):
-        patient_data['DateOfService'] = pd.to_datetime(patient_data['DateOfService'])
-
-    patient_data = patient_data.sort_values(by='DateOfService', ascending=False)
-
-    results_by_dos = {}
-    for index, row in patient_data.iterrows():
-        dos = row['DateOfService'].strftime('%Y-%m-%d')
-        if dos not in results_by_dos:
-            results_by_dos[dos] = []
-        
-        # Construct a report name and a dummy PDF filename
-        report_name = f"{row['ReportName']} - {dos}"
-        # Sanitize filename to avoid issues with special characters
-        sanitized_report_name = re.sub(r'[^\w\-_\.]', '', row['ReportName'].replace(' ', '_'))
-        dummy_pdf_filename = f"Patient_{patient_id}_DOS_{dos}_{sanitized_report_name}.pdf"
-        
-        results_by_dos[dos].append({
-            'name': report_name,
-            'webViewLink': url_for('static', filename=dummy_pdf_filename)
-        })
-        
-        # Create a dummy PDF file if it doesn't exist for demonstration purposes
-        filepath = os.path.join(app.static_folder, dummy_pdf_filename)
-        if not os.path.exists(filepath):
-            with open(filepath, 'w') as f:
-                f.write(f"This is a dummy PDF file for Patient {patient_id}, Date of Service {dos}, Report: {row['ReportName']}.")
-            print(f"Created dummy patient result file: {filepath}")
-
-    return render_template('patient_results.html', patient_name=patient_last_name, results_by_dos=results_by_dos)
-
 
 @app.route('/select_report', methods=['GET', 'POST'])
 def select_report():
-    """
-    Allows non-patient users (admins, physicians, reps, business dev managers)
-    to select report type, entity, month, and year.
-    """
-    if 'username' not in session:
-        flash("Please log in to access this page.", "warning")
-        return redirect(url_for('login'))
+    if 'username' not in session and 'patient_id' not in session:
+        flash('Please log in first.', 'error')
+        return redirect(url_for('select_role'))
+    
+    current_username = session.get('username')
+    current_role = session.get('selected_role')
+    
+    # Define available report types based on role
+    available_report_types = []
+    if current_role in ['admin', 'rep', 'business_dev_manager', 'physician_provider']:
+        available_report_types = [
+            {'name': 'Financial Reports', 'value': 'financial_reports'},
+            {'name': 'Monthly Bonus Reports', 'value': 'monthly_bonus_reports'},
+            {'name': 'Requisition Reports', 'value': 'requisition_reports'},
+            {'name': 'Marketing Material', 'value': 'marketing_material'}
+        ]
+        if current_role == 'physician_provider':
+             # Physicians can also view patient reports (e.g., for their own patients)
+             available_report_types.append({'name': 'Patient Reports', 'value': 'patient_reports'})
+    elif current_role == 'patient':
+        # Patients can only see their own reports
+        return redirect(url_for('patient_results'))
+    else:
+        flash('Unauthorized access to report selection.', 'error')
+        return redirect(url_for('logout'))
 
-    username = session['username']
-    user_role = users[username]['role']
-    user_authorized_entities = users[username]['entities']
-
-    # Filter MASTER_ENTITIES to show only those the user is authorized for
-    display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
-
-    # Use helper function to get available report types for the current user's role
-    available_report_types = get_available_report_types(user_role)
-
-    # Populate months and years for the dropdowns
-    months = [
-        {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
-        {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
-        {'value': 5, 'name': 'May'}, {'value': 6, 'name': 'June'},
-        {'value': 7, 'name': 'July'}, {'value': 8, 'name': 'August'},
-        {'value': 9, 'name': 'September'}, {'value': 10, 'name': 'October'},
-        {'value': 11, 'name': 'November'}, {'value': 12, 'name': 'December'}
-    ]
-    current_year = datetime.datetime.now().year
-    years = list(range(current_year - 2, current_year + 2)) # Years from 2 years ago to 1 year in future
+    # Filter MASTER_ENTITIES based on user's assigned entities
+    user_info = users.get(current_username)
+    if current_role == 'admin' or current_username in UNFILTERED_ACCESS_USERS: # Admins and special users see all
+        user_accessible_entities = MASTER_ENTITIES
+    elif user_info and 'entities' in user_info:
+        user_accessible_entities = sorted(list(set(user_info['entities'])))
+    else:
+        user_accessible_entities = []
 
     if request.method == 'POST':
         report_type = request.form.get('report_type')
-        selected_entity = request.form.get('entity_name')
-        selected_month = request.form.get('month')
-        selected_year = request.form.get('year')
+        entity_name = request.form.get('entity_name')
+        month = request.form.get('month')
+        year = request.form.get('year')
 
-        if not report_type or not selected_entity:
-            flash("Please select both a report type and an entity.", "error")
+        # Basic validation
+        if not report_type or not entity_name:
+            flash('Please select both Report Type and Entity.', 'error')
             return render_template(
                 'select_report.html',
-                master_entities=display_entities,
                 available_report_types=available_report_types,
-                months=months,
-                years=years
+                master_entities=user_accessible_entities,
+                months=get_months(),
+                years=get_available_years()
             )
-        
-        # Authorization check for the selected entity
-        if selected_entity not in user_authorized_entities and username not in UNFILTERED_ACCESS_USERS:
-            if not user_authorized_entities:
-                flash("You do not have any entities assigned to view reports. Please contact support.", "error")
-                return render_template('unauthorized.html', message="You do not have any entities assigned to view reports. Please contact support.")
-            flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an entity you are authorized for.", "error")
-            return render_template(
-                'select_report.html',
-                master_entities=display_entities,
-                available_report_types=available_report_types,
-                months=months,
-                years=years
-            )
-        
-        # Store selections in session for use in the dashboard
+
+        # Store selection in session
         session['report_type'] = report_type
-        session['selected_entity'] = selected_entity
-        session['selected_month'] = int(selected_month) if selected_month else None
-        session['selected_year'] = int(selected_year) if selected_year else None
-        
+        session['selected_entity'] = entity_name
+        session['selected_month'] = month if month else None
+        session['selected_year'] = year if year else None
+
         return redirect(url_for('dashboard'))
-    
-    # Render the form for GET requests
+
+    # Initial GET request
     return render_template(
         'select_report.html',
-        master_entities=display_entities,
         available_report_types=available_report_types,
-        months=months,
-        years=years
+        master_entities=user_accessible_entities,
+        months=get_months(),
+        years=get_available_years()
     )
 
-@app.route('/dashboard', methods=['GET', 'POST'])
+@app.route('/dashboard')
 def dashboard():
-    """
-    Displays reports based on user selections and authorization.
-    This is the main dashboard for non-patient roles.
-    """
-    if 'username' not in session:
-        flash("Please log in to access the dashboard.", "warning")
-        return redirect(url_for('login'))
-
-    username = session['username']
-    user_role = users[username]['role']
-    user_authorized_entities = users[username]['entities']
-
-    # Populate months and years for the dropdowns (if needed in dashboard template)
-    months = [
-        {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
-        {'value': 3, 'name': 'March'}, {'value': 4, 'name': 'April'},
-        {'value': 5, 'name': 'May'}, {'value': 6, 'name': 'June'},
-        {'value': 7, 'name': 'July'}, {'value': 8, 'name': 'August'},
-        {'value': 9, 'name': 'September'}, {'value': 10, 'name': 'October'},
-        {'value': 11, 'name': 'November'}, {'value': 12, 'name': 'December'}
-    ]
-    current_year = datetime.datetime.now().year
-    years = list(range(current_year - 2, current_year + 2))
-
-    # Retrieve selections from session or form submission
-    if request.method == 'POST':
-        selected_entity = request.form.get('entity_name')
-        report_type = request.form.get('report_type')
-        selected_month = int(request.form.get('month')) if request.form.get('month') else None
-        selected_year = int(request.form.get('year')) if request.form.get('year') else None
-
-        # Update session with new selections
-        session['selected_entity'] = selected_entity
-        session['selected_month'] = selected_month
-        session['selected_year'] = selected_year
-        session['report_type'] = report_type
-    else:
-        # Load selections from session for GET requests (e.g., after redirect from select_report)
-        selected_entity = session.get('selected_entity')
-        report_type = session.get('report_type')
-        selected_month = session.get('selected_month')
-        selected_year = session.get('selected_year')
-
-    # Filter MASTER_ENTITIES to show only those the user is authorized for
-    display_entities = [entity for entity in MASTER_ENTITIES if entity in user_authorized_entities]
-
-    # Re-check authorization for the selected entity (important if user directly navigates or session expires)
-    if selected_entity and selected_entity not in user_authorized_entities and username not in UNFILTERED_ACCESS_USERS:
-        if not user_authorized_entities:
-            flash("You do not have any entities assigned to view reports. Please contact support.", "error")
-            return render_template('unauthorized.html', message="You do not have any entities assigned to view reports. Please contact support.")
-        flash(f"You are not authorized to view reports for '{selected_entity}'. Please select an authorized entity.", "error")
-        return render_template(
-            'select_report.html',
-            master_entities=display_entities,
-            available_report_types=get_available_report_types(user_role),
-            months=months,
-            years=years
-        )
-
-    filtered_data = pd.DataFrame()
-    files = [] # List to hold report files to display
-
-    # Apply filtering based on user role and selections
-    if username in UNFILTERED_ACCESS_USERS:
-        # Unfiltered access users see all data in df
-        if not df.empty:
-            filtered_data = df.copy()
-            print(f"User {username} has unfiltered access. Displaying all data.")
-    elif not df.empty and 'Entity' in df.columns:
-        # Filter by selected entity if one is chosen and user is authorized
-        if selected_entity:
-            filtered_data = df[df['Entity'] == selected_entity].copy()
-        else:
-            # If no entity is selected, but user has limited access, show only their authorized entities' data
-            filtered_data = df[df['Entity'].isin(user_authorized_entities)].copy()
-    else:
-        print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
-
-
-    # Apply date filtering if month and year are selected
-    if selected_month and selected_year and 'ReportDate' in filtered_data.columns: # Changed 'Date' to 'ReportDate'
-        if not pd.api.types.is_datetime64_any_dtype(filtered_data['ReportDate']): # Changed 'Date' to 'ReportDate'
-            filtered_data['ReportDate'] = pd.to_datetime(filtered_data['ReportDate']) # Changed 'Date' to 'ReportDate'
-        filtered_data = filtered_data[
-            (filtered_data['ReportDate'].dt.month == selected_month) & \
-            (filtered_data['ReportDate'].dt.year == selected_year)
-        ]
-
-    # Handle specific report types
-    if report_type == 'financials':
-        if selected_year:
-            # Generate financial report filenames based on definitions and selected year/entity
-            for definition in FINANCIAL_REPORT_DEFINITIONS:
-                # Check if 'applicable_years' is defined and if the selected year is in it
-                if 'applicable_years' in definition and selected_year not in definition['applicable_years']:
-                    continue # Skip if not applicable for the selected year
-
-                file_name_prefix = selected_entity.replace(' ', '_').replace('.', '') # Sanitize entity name for filename
-                full_filename = f"{file_name_prefix}_{selected_year}{definition['file_suffix']}.pdf"
-                display_name = f"{selected_entity} {selected_year} {definition['display_name_part']} ({definition['basis']})"
-                files.append({'name': display_name, 'filename': full_filename})
-                
-                # Create dummy PDF file if it doesn't exist
-                filepath = os.path.join(app.static_folder, full_filename)
-                if not os.path.exists(filepath):
-                    with open(filepath, 'w') as f:
-                        f.write(f"This is a dummy PDF for {display_name}.")
-                    print(f"Created dummy financial report file: {filepath}")
-        else:
-            flash("Please select a year for financial reports.", "info")
-    elif report_type == 'monthly_bonus':
-        if 'Username' in filtered_data.columns:
-            normalized_username = username.strip().lower()
-            # Filter for reports where the current username is explicitly listed in the 'Username' column
-            # This handles both single and comma-separated usernames (e.g., 'AndrewS' or 'AndrewS,MelindaC')
-            filtered_data['Username'] = filtered_data['Username'].astype(str)
-            regex_pattern = r'\b' + re.escape(normalized_username) + r'\b'
-            filtered_data = filtered_data[
-                filtered_data['Username'].str.strip().str.lower().str.contains(regex_pattern, na=False)
-            ]
-            
-            if not filtered_data.empty:
-                files = [
-                    {'name': f"Monthly Bonus Report - {row['Entity']} - {row['ReportDate'].strftime('%Y-%m')}", # Changed 'Date' to 'ReportDate'
-                     'filename': f"monthly_bonus_report_{row['Entity'].replace(' ', '_').replace('.', '')}_{row['ReportDate'].strftime('%Y%m')}.pdf"} # Changed 'Date' to 'ReportDate'
-                    for index, row in filtered_data.iterrows()
-                ]
-                # Create dummy PDF files for monthly bonus reports
-                for file_info in files:
-                    filepath = os.path.join(app.static_folder, file_info['filename'])
-                    if not os.path.exists(filepath):
-                        with open(filepath, 'w') as f:
-                            f.write(f"This is a dummy PDF for {file_info['name']}.")
-                        print(f"Created dummy monthly bonus report file: {filepath}")
-            else:
-                flash("No monthly bonus reports found for your selection criteria or username.", "info")
-        else:
-            flash("The 'Username' column is missing in data.csv, cannot filter monthly bonus reports.", "error")
-    elif report_type == 'requisitions':
-        # Dummy requisitions data
-        files = [
-            {'name': 'Requisition Form 1', 'filename': 'requisition_form_1.pdf'},
-            {'name': 'Requisition Guidelines', 'filename': 'requisition_guidelines.pdf'}
-        ]
-        # Create dummy PDF files for requisitions
-        for file_info in files:
-            filepath = os.path.join(app.static_folder, file_info['filename'])
-            if not os.path.exists(filepath):
-                with open(filepath, 'w') as f:
-                    f.write(f"This is a dummy PDF for {file_info['name']}.")
-                print(f"Created dummy requisition file: {filepath}")
-    elif report_type == 'marketing_material':
-        # Dummy marketing material data
-        files = [
-            {'name': 'Brochure - Services', 'filename': 'brochure_services.pdf'},
-            {'name': 'Company Profile', 'filename': 'company_profile.pdf'}
-        ]
-        # Create dummy PDF files for marketing material
-        for file_info in files:
-            filepath = os.path.join(app.static_folder, file_info['filename'])
-            if not os.path.exists(filepath):
-                with open(filepath, 'w') as f:
-                    f.write(f"This is a dummy PDF for {file_info['name']}.")
-                print(f"Created dummy marketing material file: {filepath}")
-    elif report_type == 'patient_reports':
-        # This report type redirects to the patient_results route for patient-specific views
-        # Non-patient users (admins, physicians) would typically search for a patient here
-        # For now, we'll just show a message or redirect if a patient ID is somehow in session
-        if 'patient_id' in session:
-            return redirect(url_for('patient_results'))
-        else:
-            flash("Please search for a patient to view patient-specific reports.", "info")
-            files = [] # No files directly displayed here
+    if 'username' not in session and 'patient_id' not in session:
+        flash('Please log in first.', 'error')
+        return redirect(url_for('select_role'))
     
-    # Prepare data for display in the table (e.g., first few rows of filtered_data)
-    data_for_display = {}
-    if not filtered_data.empty:
-        data_for_display = filtered_data.head().to_dict(orient='records') # Display first 5 records as example
+    current_username = session.get('username')
+    current_role = session.get('selected_role')
+    selected_entity = session.get('selected_entity')
+    report_type = session.get('report_type')
+    selected_month = session.get('selected_month')
+    selected_year = session.get('selected_year')
 
+    # Redirect patients to their specific results page
+    if current_role == 'patient':
+        return redirect(url_for('patient_results'))
+
+    # Check if necessary selections are made
+    if not report_type or not selected_entity:
+        flash('Please select a report type and entity.', 'warning')
+        return redirect(url_for('select_report'))
+
+    # Authorization check for entity access
+    user_entities = get_user_entities(current_username)
+    if current_role != 'admin' and current_username not in UNFILTERED_ACCESS_USERS:
+        if selected_entity not in user_entities:
+            flash(f'You are not authorized to view reports for {selected_entity}.', 'error')
+            return render_template('unauthorized.html', message=f'Access Denied: You do not have permission to view reports for {selected_entity}.')
+
+    files = [] # To store list of PDF files
+    data = [] # To store dataframe data for display
+
+    if report_type == 'financial_reports':
+        # Example dummy PDF files for financial reports
+        # These are just examples, you would replace this with actual file fetching logic
+        # Filename format: Financials_EntityName_Month_Year.pdf
+        # Note: AMICO DX LLC files are named 'AMICO Dx LLC' in file system.
+        financial_files_data = [
+            {'name': 'Financials - First Bio Lab - Jan 2024', 'filename': 'Financials_First Bio Lab_January_2024.pdf', 'entity': 'First Bio Lab', 'month': 'January', 'year': 2024},
+            {'name': 'Financials - First Bio Lab - Feb 2024', 'filename': 'Financials_First Bio Lab_February_2024.pdf', 'entity': 'First Bio Lab', 'month': 'February', 'year': 2024},
+            {'name': 'Financials - First Bio Genetics LLC - Jan 2024', 'filename': 'Financials_First Bio Genetics LLC_January_2024.pdf', 'entity': 'First Bio Genetics LLC', 'month': 'January', 'year': 2024},
+            {'name': 'Financials - AMICO Dx LLC - Feb 2024', 'filename': 'Financials_AMICO Dx LLC_February_2024.pdf', 'entity': 'AMICO Dx LLC', 'month': 'February', 'year': 2024},
+            {'name': 'Financials - AIM Laboratories LLC - Mar 2024', 'filename': 'Financials_AIM Laboratories LLC_March_2024.pdf', 'entity': 'AIM Laboratories LLC', 'month': 'March', 'year': 2024},
+            {'name': 'Financials - First Bio Lab of Illinois - Apr 2024', 'filename': 'Financials_First Bio Lab of Illinois_April_2024.pdf', 'entity': 'First Bio Lab of Illinois', 'month': 'April', 'year': 2024},
+            {'name': 'Financials - Stat Labs - May 2024', 'filename': 'Financials_Stat Labs_May_2024.pdf', 'entity': 'Stat Labs', 'month': 'May', 'year': 2024},
+            {'name': 'Financials - Enviro Labs LLC - Jun 2024', 'filename': 'Financials_Enviro Labs LLC_June_2024.pdf', 'entity': 'Enviro Labs LLC', 'month': 'June', 'year': 2024},
+            # Add more dummy files as needed
+        ]
+        for f in financial_files_data:
+            if f['entity'] == selected_entity and \
+               (not selected_month or f['month'] == selected_month) and \
+               (not selected_year or f['year'] == int(selected_year)):
+                files.append({'name': f['name'], 'filename': f['filename']})
+
+    elif report_type == 'monthly_bonus_reports':
+        try:
+            df = pd.read_csv('data.csv')
+
+            # Filter by entity
+            filtered_df = df[df['Entity'] == selected_entity]
+
+            # Further filter by month and year if selected
+            if selected_month:
+                filtered_df = filtered_df[filtered_df['Month'] == selected_month]
+            if selected_year:
+                filtered_df = filtered_df[filtered_df['Year'] == int(selected_year)]
+
+            # Filter by username for non-admin/unfiltered users
+            if current_username not in UNFILTERED_ACCESS_USERS:
+                # Handle comma-separated usernames in the 'Username' column
+                filtered_df = filtered_df[
+                    filtered_df['Username'].apply(lambda x: current_username in [u.strip() for u in x.split(',')])
+                ]
+
+            if not filtered_df.empty:
+                # If a specific month and year are selected, generate a dummy PDF link
+                if selected_month and selected_year:
+                    pdf_name = f"{selected_entity.replace(' ', '_')}_Bonus_Report_{selected_month}_{selected_year}.pdf"
+                    files.append({'name': f"Monthly Bonus Report - {selected_entity} - {selected_month} {selected_year}", 'filename': pdf_name})
+                    # You might also want to show a small preview of the data even when a PDF is generated
+                    data = filtered_df.head().to_dict(orient='records')
+                else:
+                    # If no specific month/year, show the table data (e.g., all bonus data for the entity/user)
+                    data = filtered_df.to_dict(orient='records')
+            else:
+                flash('No monthly bonus report data found for your selection.', 'info')
+
+        except FileNotFoundError:
+            flash('Monthly bonus reports data file not found.', 'error')
+        except Exception as e:
+            flash(f'An error occurred: {e}', 'error')
+
+    elif report_type == 'requisition_reports':
+        # Dummy PDF files for requisition reports (similar to financial reports)
+        # Filename format: Requisitions_EntityName_Month_Year.pdf
+        requisition_files_data = [
+            {'name': 'Requisitions - First Bio Lab - Q1 2024', 'filename': 'Requisitions_First Bio Lab_Q1_2024.pdf', 'entity': 'First Bio Lab', 'month': 'Q1', 'year': 2024},
+            {'name': 'Requisitions - First Bio Genetics LLC - Q2 2024', 'filename': 'Requisitions_First Bio Genetics LLC_Q2_2024.pdf', 'entity': 'First Bio Genetics LLC', 'month': 'Q2', 'year': 2024},
+            # Add more dummy files as needed
+        ]
+        for f in requisition_files_data:
+            # Assuming month/year can be 'Q1', 'Q2' etc. or specific months
+            month_match = not selected_month or (f['month'] == selected_month)
+            year_match = not selected_year or (f['year'] == int(selected_year))
+
+            if f['entity'] == selected_entity and month_match and year_match:
+                files.append({'name': f['name'], 'filename': f['filename']})
+
+    elif report_type == 'marketing_material':
+        # Dummy PDF files for marketing materials (e.g., brochures, flyers)
+        marketing_files_data = [
+            {'name': 'Marketing Brochure - First Bio Lab', 'filename': 'Marketing_Brochure_First Bio Lab.pdf', 'entity': 'First Bio Lab'},
+            {'name': 'Service Flyer - First Bio Genetics LLC', 'filename': 'Service_Flyer_First Bio Genetics LLC.pdf', 'entity': 'First Bio Genetics LLC'},
+            {'name': 'Company Profile - AIM Laboratories LLC', 'filename': 'Company_Profile_AIM Laboratories LLC.pdf', 'entity': 'AIM Laboratories LLC'},
+            # Add more dummy files as needed
+        ]
+        for f in marketing_files_data:
+            if f['entity'] == selected_entity:
+                files.append({'name': f['name'], 'filename': f['filename']})
+
+    # Render dashboard template with relevant data
     return render_template(
         'dashboard.html',
-        current_username=username,
+        current_username=current_username,
         selected_entity=selected_entity,
         report_type=report_type,
-        months=months,
-        years=years,
         selected_month=selected_month,
         selected_year=selected_year,
-        files=files, # List of generated report files
-        data=data_for_display, # Sample data from the filtered dataframe
-        master_entities=display_entities, # Entities the current user can see
-        available_report_types=get_available_report_types(user_role) # Report types for the current role
+        files=files, # List of files to display
+        data=data,   # DataFrame data to display (if no specific files or for preview)
+        months=get_months(), # Pass for dropdown in sidebar if needed
+        years=get_available_years() # Pass for dropdown in sidebar if needed
     )
+
+@app.route('/patient_results')
+def patient_results():
+    patient_id = session.get('patient_id')
+    patient_name = session.get('username') # This would be last_name for patients
+
+    if not patient_id:
+        flash('Patient not logged in.', 'error')
+        return redirect(url_for('login'))
+
+    try:
+        df_patients = pd.read_csv('patient_data.csv')
+        patient_results_df = df_patients[df_patients['PatientID'] == patient_id]
+
+        if not patient_results_df.empty:
+            # Group reports by DateOfService for display
+            results_by_dos = {}
+            for _, row in patient_results_df.iterrows():
+                dos = row['DateOfService']
+                if dos not in results_by_dos:
+                    results_by_dos[dos] = []
+                # Create a dummy link for the report file in static folder
+                report_file_path = url_for('static', filename=row['ReportFile'])
+                results_by_dos[dos].append({
+                    'name': row['ReportName'],
+                    'webViewLink': report_file_path # Use this for direct link to dummy PDF
+                })
+            return render_template('patient_results.html', patient_name=patient_name, results_by_dos=results_by_dos)
+        else:
+            return render_template('patient_results.html', patient_name=patient_name, message='No lab results found for your ID.')
+
+    except FileNotFoundError:
+        flash('Patient data file not found.', 'error')
+        return render_template('patient_results.html', patient_name=patient_name, message='Error: Patient data file not found.')
+    except Exception as e:
+        flash(f'An error occurred: {e}', 'error')
+        return render_template('patient_results.html', patient_name=patient_name, message=f'An error occurred: {e}')
+
 
 @app.route('/logout')
 def logout():
-    """Logs out the current user and clears session data."""
     session.pop('username', None)
-    session.pop('selected_role', None)
     session.pop('patient_id', None)
+    session.pop('selected_role', None)
     session.pop('report_type', None)
     session.pop('selected_entity', None)
     session.pop('selected_month', None)
     session.pop('selected_year', None)
-    flash("You have been logged out.", "info")
-    return redirect(url_for('select_role')) # Redirect to role selection after logout
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('select_role'))
 
 if __name__ == '__main__':
-    # Ensure the 'static' folder exists for dummy PDF files
+    # Create a 'static' folder if it doesn't exist to simulate dummy PDFs
     if not os.path.exists('static'):
         os.makedirs('static')
+
+    # Create dummy PDF files in the 'static' folder if they don't exist
+    dummy_pdf_names = [
+        'Financials_First Bio Lab_January_2024.pdf',
+        'Financials_First Bio Lab_February_2024.pdf',
+        'Financials_First Bio Genetics LLC_January_2024.pdf',
+        'Financials_AMICO Dx LLC_February_2024.pdf',
+        'Financials_AIM Laboratories LLC_March_2024.pdf',
+        'Financials_First Bio Lab of Illinois_April_2024.pdf',
+        'Financials_Stat Labs_May_2024.pdf',
+        'Financials_Enviro Labs LLC_June_2024.pdf',
+        'Requisitions_First Bio Lab_Q1_2024.pdf',
+        'Requisitions_First Bio Genetics LLC_Q2_2024.pdf',
+        'Marketing_Brochure_First Bio Lab.pdf',
+        'Service_Flyer_First Bio Genetics LLC.pdf',
+        'Company_Profile_AIM Laboratories LLC.pdf',
+        'First_Bio_Lab_Bonus_Report_January_2024.pdf', # Example bonus PDF
+        'AMICO_DX_LLC_Bonus_Report_February_2024.pdf', # Example bonus PDF for new multi-user test
+        'patient_report_P001_CMP_20240501.pdf',
+        'patient_report_P001_CBC_20240410.pdf',
+        'patient_report_P002_Thyroid_20240505.pdf',
+        'patient_report_P001_Urinalysis_20240320.pdf',
+        'patient_report_P001_Lipid_20240515.pdf'
+    ]
+
+    for pdf_name in dummy_pdf_names:
+        file_path = os.path.join('static', pdf_name)
+        if not os.path.exists(file_path):
+            with open(file_path, 'w') as f:
+                f.write(f"This is a dummy PDF content for {pdf_name}")
+            print(f"Created dummy PDF: {file_path}")
+
     app.run(debug=True)
