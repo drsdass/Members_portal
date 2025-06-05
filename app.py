@@ -24,7 +24,7 @@ MASTER_ENTITIES = sorted([
 
 # --- Users with Unfiltered Access (for monthly bonus reports - remains unchanged) ---
 # These specific admins will still get all data for bonus reports regardless of 'entities' filter.
-UNFILTERED_ACCESS_USERS = ['SatishD', 'AshlieT', 'MinaK', 'BobS']
+UNFILTERED_ACCESS_USERS = ['SatishD', 'AshlieT', 'MinaK', 'BobS', 'NickT',]
 
 # --- User Management (In-memory, with granular entity assignments for all roles) ---
 users = {
@@ -38,6 +38,7 @@ users = {
     'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
     'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
     'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
+    'NickT': {'password_hash': generate_password_hash('jntlaw'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
 
     # Admins with Specific Limited Access (based on your latest instructions)
     'AghaA': {'password_hash': generate_password_hash('agapass'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin'},
