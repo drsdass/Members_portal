@@ -6,70 +6,123 @@
     <title>Login - {{ selected_role | replace('_', ' ') | title }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
+        .gradient-background {
+            background: linear-gradient(135deg, #0f1c3a 0%, #1e3a67 100%); /* Dark blue gradient */
+        }
+        .login-container {
+            background-color: #1a2a46; /* Slightly lighter dark blue for the login card */
+        }
+        .input-field {
+            background-color: #2a3d5e; /* Darker blue for input fields */
+            color: #ffffff; /* White text for input fields */
+            border: 1px solid #3a507a; /* Darker border for input fields */
+        }
+        .input-field::placeholder {
+            color: #a0aec0; /* Light gray placeholder text */
+        }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <div class="text-center mb-6">
-            <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Company Logo" style="max-width: 150px; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); margin: 0 auto;">
+<body class="gradient-background flex items-center justify-center min-h-screen">
+    <div class="relative w-full h-full flex items-center justify-center p-4 lg:p-0">
+        <div class="hidden lg:flex flex-1 items-center justify-center relative h-screen">
+            <img src="{{ url_for('static', filename='DNA-helix-concept.jpg') }}" alt="DNA Helix Concept" class="absolute inset-0 w-full h-full object-cover opacity-80">
+            <div class="relative z-10 text-white text-center p-8 bg-black bg-opacity-30 rounded-lg">
+                <h1 class="text-5xl font-bold mb-4">Welcome to Your Health Portal</h1>
+                <p class="text-xl">Securely manage your health data and insights.</p>
+            </div>
         </div>
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Login as {{ selected_role | replace('_', ' ') | title }}</h2>
-        {% if error %}
-            <p class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4 text-center">{{ error }}</p>
-        {% endif %}
 
-        <form action="{{ url_for('login') }}" method="post" class="space-y-6">
-            {% if selected_role == 'patient' %}
-                <div>
-                    <label for="last_name" class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-                    <input type="text" id="last_name" name="last_name" required
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+        <div class="w-full lg:w-1/2 flex items-center justify-center min-h-screen">
+            <div class="login-container p-8 rounded-xl shadow-2xl w-full max-w-md mx-auto relative overflow-hidden">
+                <div class="bg-cyan-700 text-white text-sm px-4 py-2 rounded-md mb-6 flex items-center">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    Role '{{ selected_role | replace('_', ' ') | title }}' selected, please sign in.
                 </div>
-                <div>
-                    <label for="dob" class="block text-sm font-medium text-gray-700 mb-1">Date of Birth</label>
-                    <input type="date" id="dob" name="dob" required
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+
+                <div class="flex justify-end space-x-2 mb-6 absolute top-8 right-8">
+                    <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Logo 1" class="h-8">
+                    <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Logo 2" class="h-8">
+                    <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Logo 3" class="h-8">
                 </div>
-                <div>
-                    <label for="ssn4" class="block text-sm font-medium text-gray-700 mb-1">Last 4 Digits of SSN</label>
-                    <input type="text" id="ssn4" name="ssn4" required pattern="\d{4}" maxlength="4"
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                
+                <h2 class="text-4xl font-bold text-white text-center mb-8">Sign In</h2>
+                
+                {% if error %}
+                    <p class="bg-red-700 text-white px-4 py-3 rounded-md mb-6 text-center">{{ error }}</p>
+                {% endif %}
+
+                <form action="{{ url_for('login') }}" method="post" class="space-y-6">
+                    {% if selected_role == 'patient' %}
+                        <div>
+                            <label for="last_name" class="block text-sm font-medium text-gray-300 mb-1">Last Name</label>
+                            <input type="text" id="last_name" name="last_name" required placeholder="Enter your last name"
+                                class="mt-1 block w-full px-4 py-3 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 sm:text-base input-field">
+                        </div>
+                        <div>
+                            <label for="dob" class="block text-sm font-medium text-gray-300 mb-1">Date of Birth</label>
+                            <input type="date" id="dob" name="dob" required
+                                class="mt-1 block w-full px-4 py-3 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 sm:text-base input-field">
+                        </div>
+                        <div>
+                            <label for="ssn4" class="block text-sm font-medium text-gray-300 mb-1">Last 4 Digits of SSN</label>
+                            <input type="text" id="ssn4" name="ssn4" required pattern="\d{4}" maxlength="4" placeholder="••••"
+                                class="mt-1 block w-full px-4 py-3 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 sm:text-base input-field">
+                        </div>
+                    {% elif selected_role == 'physician_provider' %}
+                        <div>
+                            <label for="email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                            <input type="email" id="email" name="email" required placeholder="Enter your email"
+                                class="mt-1 block w-full px-4 py-3 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 sm:text-base input-field">
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                            <input type="password" id="password" name="password" required placeholder="Enter your password"
+                                class="mt-1 block w-full px-4 py-3 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 sm:text-base input-field">
+                        </div>
+                        <div class="text-center mt-4">
+                            <a href="{{ url_for('register_physician') }}" class="text-cyan-500 hover:underline text-sm">Register as Physician/Provider</a>
+                        </div>
+                    {% else %} {# Default for admin, business_dev_manager #}
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-300 mb-1">Username</label>
+                            <input type="text" id="username" name="username" required placeholder="Enter your username"
+                                class="mt-1 block w-full px-4 py-3 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 sm:text-base input-field">
+                        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                            <input type="password" id="password" name="password" required placeholder="Enter your password"
+                                class="mt-1 block w-full px-4 py-3 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 sm:text-base input-field">
+                        </div>
+                    {% endif %}
+                    
+                    <div class="flex items-center justify-between text-sm">
+                        <div class="flex items-center">
+                            <input id="remember_me" name="remember_me" type="checkbox" class="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-600 rounded">
+                            <label for="remember_me" class="ml-2 block text-gray-400">Keep me logged in</label>
+                        </div>
+                        <div class="text-sm">
+                            <a href="#" class="font-medium text-gray-400 hover:text-cyan-500 hover:underline">Forgot password?</a>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-semibold text-white bg-cyan-600 hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 transition duration-150 ease-in-out">
+                        Sign In
+                    </button>
+                </form>
+
+                <div class="mt-8 text-center">
+                    <a href="{{ url_for('select_role') }}" class="text-gray-400 hover:text-cyan-500 hover:underline text-sm">Back to Role Selection</a>
                 </div>
-            {% elif selected_role == 'physician_provider' %}
-                <div>
-                    <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="email" name="email" required
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+
+                <div class="mt-10 text-center text-xs text-gray-500 space-x-4">
+                    <a href="#" class="hover:underline">Privacy Policy</a>
+                    <a href="#" class="hover:underline">Terms & Conditions</a>
+                    <a href="#" class="hover:underline">About Us</a>
                 </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="password" name="password" required
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div class="text-center mt-4">
-                    <a href="{{ url_for('register_physician') }}" class="text-blue-600 hover:underline text-sm">Register as Physician/Provider</a>
-                </div>
-            {% else %} {# Default for admin, business_dev_manager #}
-                <div>
-                    <label for="username" class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-                    <input type="text" id="username" name="username" required
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-                <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="password" name="password" required
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                </div>
-            {% endif %}
-            
-            <button type="submit"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                Log In
-            </button>
-        </form>
-        <div class="mt-6 text-center">
-            <a href="{{ url_for('select_role') }}" class="text-gray-600 hover:underline">Back to Role Selection</a>
+            </div>
         </div>
     </div>
 </body>
