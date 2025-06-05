@@ -3,96 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Report & Entity</title>
+    <title>Select Report</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        .input-field, select {
+            @apply mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm;
+        }
+        .btn {
+            @apply px-6 py-3 rounded-lg font-semibold text-lg transition-all duration-300 ease-in-out;
+        }
+        .btn-primary {
+            @apply bg-blue-600 text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-md hover:shadow-lg;
+        }
+        .link-text {
+            @apply text-blue-600 hover:underline;
+        }
     </style>
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
-    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Select Report and Entity</h2>
-        <p class="text-center text-gray-600 mb-6">Welcome, {{ session['username'] }}!</p>
-        {% if error %}
-            <p class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4 text-center">{{ error }}</p>
-        {% endif %}
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+        <h1 class="text-4xl font-extrabold text-gray-900 mb-6 text-center">Select Report & Filters</h1>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6 space-y-3">
+                    {% for category, message in messages %}
+                        <p class="{% if category == 'error' %}bg-red-100 border border-red-400 text-red-700{% elif category == 'success' %}bg-green-100 border border-green-400 text-green-700{% else %}bg-blue-100 border border-blue-400 text-blue-700{% endif %} px-4 py-3 rounded-md text-center">
+                            {{ message }}
+                        </p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
         <form action="/select_report" method="post" class="space-y-6">
             <div>
-                <label for="entity_name" class="block text-sm font-medium text-gray-700 mb-1">Choose an Entity:</label>
-                <select id="entity_name" name="entity_name" required
-                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                <label for="report_type" class="block text-sm font-medium text-gray-700">Report Type:</label>
+                <select id="report_type" name="report_type" required class="input-field">
+                    <option value="">-- Select Report Type --</option>
+                    {% for type in available_report_types %}
+                        <option value="{{ type.value }}">{{ type.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="entity_name" class="block text-sm font-medium text-gray-700">Entity:</label>
+                <select id="entity_name" name="entity_name" required class="input-field">
                     <option value="">-- Select Entity --</option>
                     {% for entity in master_entities %}
                         <option value="{{ entity }}">{{ entity }}</option>
                     {% endfor %}
                 </select>
             </div>
-            <div>
-                <label for="report_type" class="block text-sm font-medium text-gray-700 mb-1">Choose a Report Type:</label>
-                <select id="report_type" name="report_type" required
-                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                    <option value="">-- Select Report Type --</option>
-                    {% for report_type_option in available_report_types %}
-                        <option value="{{ report_type_option.value }}">{{ report_type_option.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            
-            <div id="month_year_selection" class="space-y-4">
-                <label class="block text-sm font-medium text-gray-700">Select Month and Year (for Monthly Bonus Report):</label>
-                <div class="flex space-x-4">
-                    <div class="w-1/2">
-                        <label for="month" class="block text-sm font-medium text-gray-700 sr-only">Month:</label>
-                        <select id="month" name="month" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option value="">-- Select Month --</option>
-                            {% for month in months %}
-                                <option value="{{ month.value }}">{{ month.name }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    <div class="w-1/2">
-                        <label for="year" class="block text-sm font-medium text-gray-700 sr-only">Year:</label>
-                        <select id="year" name="year" class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
-                            <option value="">-- Select Year --</option>
-                            {% for year in years %}
-                                <option value="{{ year }}">{{ year }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
+
+            <!-- Month and Year selection, initially hidden -->
+            <div id="month-year-selection" class="space-y-6" style="display: none;">
+                <div>
+                    <label for="month" class="block text-sm font-medium text-gray-700">Month:</label>
+                    <select id="month" name="month" class="input-field">
+                        <option value="">All Months</option>
+                        {% for month_data in months %}
+                            <option value="{{ month_data.value }}">{{ month_data.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="year" class="block text-sm font-medium text-gray-700">Year:</label>
+                    <select id="year" name="year" class="input-field">
+                        <option value="">All Years</option>
+                        {% for year_val in years %}
+                            <option value="{{ year_val }}">{{ year_val }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
 
-            <button type="submit"
-                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <button type="submit" class="w-full btn btn-primary">
                 View Report
             </button>
         </form>
+
         <div class="mt-6 text-center">
-            <a href="/logout" class="text-blue-600 hover:underline">Logout</a>
+            <a href="/logout" class="link-text">Logout</a>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const reportTypeSelect = document.getElementById('report_type');
-            const monthYearSelection = document.getElementById('month_year_selection');
+            const monthYearSelection = document.getElementById('month-year-selection');
 
-            function toggleMonthYear() {
-                // Only show month/year for monthly_bonus report
-                if (reportTypeSelect.value === 'monthly_bonus') {
+            function toggleMonthYearVisibility() {
+                const selectedReportType = reportTypeSelect.value;
+                if (selectedReportType === 'monthly_bonus_reports' || selectedReportType === 'financial_reports' || selectedReportType === 'requisition_reports') {
                     monthYearSelection.style.display = 'block';
                 } else {
                     monthYearSelection.style.display = 'none';
                 }
             }
 
-            // Initial state
-            toggleMonthYear();
+            // Set initial visibility
+            toggleMonthYearVisibility();
 
             // Add event listener for changes
-            reportTypeSelect.addEventListener('change', toggleMonthYear);
+            reportTypeSelect.addEventListener('change', toggleMonthYearVisibility);
         });
     </script>
 </body>
 </html>
-
