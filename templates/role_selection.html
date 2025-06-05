@@ -6,75 +6,93 @@
     <title>Select Your Role</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f4f4;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; /* Use Inter font */
         }
-        .role-container {
-            background-color: #fff;
-            padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            text-align: center;
-            width: 90%;
-            max-width: 500px;
+        .gradient-background {
+            background: linear-gradient(135deg, #0f1c3a 0%, #1e3a67 100%); /* Dark blue gradient from login */
         }
-        h1 {
-            color: #0056b3;
-            margin-bottom: 30px;
-            font-size: 2.2em;
-        }
-        .button-group {
-            display: flex;
-            flex-direction: column; /* Stack buttons vertically */
-            gap: 15px; /* Space between buttons */
-            margin-top: 20px;
+        .login-container { /* Reusing the login-container class for the role selection card */
+            background-color: #1a2a46; /* Slightly lighter dark blue from login */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25); /* Stronger shadow */
         }
         .role-button {
-            background-color: #007bff;
-            color: white;
-            padding: 15px 25px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.2s ease;
-            width: 100%; /* Make buttons full width */
+            background-color: #2a3d5e; /* Darker blue from input fields */
+            color: #ffffff; /* White text */
+            border: 1px solid #3a507a; /* Darker border from input fields */
+            transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
         }
         .role-button:hover {
-            background-color: #0056b3;
+            background-color: #3a507a; /* Lighter on hover */
+            border-color: #4a6390;
             transform: translateY(-2px);
         }
-        .error-message {
-            color: #dc3545;
-            margin-top: 20px;
-            font-weight: bold;
+        /* Styling for flashed messages */
+        .flash-message-error {
+            background-color: #dc3545; /* Red */
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .flash-message-success {
+            background-color: #28a745; /* Green */
+            color: #ffffff;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 24px;
+            text-align: center;
         }
     </style>
 </head>
-<body>
-    <div class="role-container">
-        <h1>Welcome! Please Select Your Role</h1>
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <p class="bg-{{ 'red' if category == 'error' else 'green' }}-100 border border-{{ 'red' if category == 'error' else 'green' }}-400 text-{{ 'red' if category == 'error' else 'green' }}-700 px-4 py-3 rounded-md mb-4 text-center">{{ message }}</p>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-        <form action="{{ url_for('select_role') }}" method="POST">
-            <div class="button-group">
-                <button type="submit" name="role" value="physician_provider" class="role-button">Physician/Provider</button>
-                <button type="submit" name="role" value="patient" class="role-button">Patient</button>
-                <button type="submit" name="role" value="business_dev_manager" class="role-button">Business Development Manager</button>
-                <button type="submit" name="role" value="admin" class="role-button">Admin</button>
+<body class="gradient-background flex items-center justify-center min-h-screen relative">
+    <div class="relative w-full h-full flex items-center justify-center p-4 lg:p-0">
+        <div class="hidden lg:flex flex-1 items-center justify-center relative h-screen">
+            <img src="{{ url_for('static', filename='DNA-helix-concept.jpg') }}" alt="DNA Helix Concept" class="absolute inset-0 w-full h-full object-cover opacity-80">
+            <div class="relative z-10 text-white text-center p-8 bg-black bg-opacity-30 rounded-lg">
+                <h1 class="text-5xl font-bold mb-4">Welcome to One Health Portal</h1>
+                <p class="text-xl">Securely manage your health data for AMICO Dx - AIM Laboratories - First Bio Lab - First Bio Genetics - First Bio Lab of Illinois - STAT Labs - Enviro Labs</p>
             </div>
-        </form>
+        </div>
+
+        <div class="w-full lg:w-1/2 flex items-center justify-center min-h-screen">
+            <div class="login-container p-8 rounded-xl shadow-2xl w-full max-w-md mx-auto relative overflow-hidden">
+                <div class="flex justify-center mb-8">
+                    <img src="{{ url_for('static', filename='images/Logopart4.png') }}" alt="Company Logo" class="w-full h-auto object-scale-down opacity-75">
+                </div>
+                
+                <h2 class="text-4xl font-bold text-white text-center mb-8">Select Your Role</h2>
+                
+                <p class="text-gray-300 text-center mb-6">Welcome! Please Select Your Role to proceed.</p>
+
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <p class="{% if category == 'error' %}flash-message-error{% else %}flash-message-success{% endif %}">
+                                {{ message }}
+                            </p>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form action="{{ url_for('select_role') }}" method="POST">
+                    <div class="button-group space-y-4"> {# Using Tailwind's space-y for gap #}
+                        <button type="submit" name="role" value="physician_provider" class="role-button block w-full py-3 px-4 rounded-md text-lg font-semibold">Physician/Provider</button>
+                        <button type="submit" name="role" value="patient" class="role-button block w-full py-3 px-4 rounded-md text-lg font-semibold">Patient</button>
+                        <button type="submit" name="role" value="business_dev_manager" class="role-button block w-full py-3 px-4 rounded-md text-lg font-semibold">Business Development Manager</button>
+                        <button type="submit" name="role" value="admin" class="role-button block w-full py-3 px-4 rounded-md text-lg font-semibold">Admin</button>
+                    </div>
+                </form>
+
+                <div class="mt-10 text-center text-xs text-gray-500 space-x-4">
+                    <a href="#" class="hover:underline">Privacy Policy</a>
+                    <a href="#" class="hover:underline">Terms & Conditions</a>
+                    <a href="#" class="hover:underline">About Us</a>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
