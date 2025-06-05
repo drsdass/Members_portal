@@ -25,26 +25,21 @@
     </style>
 </head>
 <body class="gradient-background flex items-center justify-center min-h-screen relative">
-    <div class="absolute top-4 right-4 flex items-center space-x-2 z-50">
-        <img src="{{ url_for('static', filename='images/Logopart4.png') }}" alt="Company Logo" class="h-8">
-        </div>
-
     <div class="relative w-full h-full flex items-center justify-center p-4 lg:p-0">
         <div class="hidden lg:flex flex-1 items-center justify-center relative h-screen">
             <img src="{{ url_for('static', filename='DNA-helix-concept.jpg') }}" alt="DNA Helix Concept" class="absolute inset-0 w-full h-full object-cover opacity-80">
             <div class="relative z-10 text-white text-center p-8 bg-black bg-opacity-30 rounded-lg">
-                <h1 class="text-5xl font-bold mb-4">Welcome to One Health Portal</h1>
-                <p class="text-xl">Securely manage your health data for AMICO Dx - AIM Laboratories - First Bio Lab - First Bio Genetics - First Bio Lab of Illinois - STAT Labs - Enviro Labs.</p>
+                <h1 class="text-5xl font-bold mb-4">Welcome to Your Health Portal</h1>
+                <p class="text-xl">Securely manage your health data and insights.</p>
             </div>
         </div>
 
         <div class="w-full lg:w-1/2 flex items-center justify-center min-h-screen">
             <div class="login-container p-8 rounded-xl shadow-2xl w-full max-w-md mx-auto relative overflow-hidden">
-                <div class="bg-cyan-700 text-white text-sm px-4 py-2 rounded-md mb-6 flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    Role '{{ selected_role | replace('_', ' ') | title }}' selected, please sign in.
+                <div class="flex justify-center mb-6">
+                    <img src="{{ url_for('static', filename='images/Logopart4.png') }}" alt="Company Logo" class="w-full h-auto object-contain">
                 </div>
-
+                
                 <h2 class="text-4xl font-bold text-white text-center mb-8">Sign In</h2>
                 
                 {% if error %}
