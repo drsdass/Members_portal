@@ -24,7 +24,15 @@
         }
     </style>
 </head>
-<body class="gradient-background flex items-center justify-center min-h-screen">
+<body class="gradient-background flex items-center justify-center min-h-screen relative">
+    <div class="absolute top-4 right-4 flex items-center space-x-2 z-50">
+        <img src="{{ url_for('static', filename='images/Health_Holdings_Logo.png') }}" alt="Health Holdings Logo" class="h-8">
+        <img src="{{ url_for('static', filename='images/AIM_Laboratories_Logo.png') }}" alt="AIM Laboratories Logo" class="h-6">
+        <img src="{{ url_for('static', filename='images/First_Bio_Logo.png') }}" alt="First Bio Logo" class="h-6">
+        <img src="{{ url_for('static', filename='images/Stat_Labs_Logo.png') }}" alt="Stat Labs Logo" class="h-6">
+        <img src="{{ url_for('static', filename='images/First_Bio_Enviro_Logo.png') }}" alt="First Bio Enviro Logo" class="h-6">
+    </div>
+
     <div class="relative w-full h-full flex items-center justify-center p-4 lg:p-0">
         <div class="hidden lg:flex flex-1 items-center justify-center relative h-screen">
             <img src="{{ url_for('static', filename='DNA-helix-concept.jpg') }}" alt="DNA Helix Concept" class="absolute inset-0 w-full h-full object-cover opacity-80">
@@ -41,11 +49,14 @@
                     Role '{{ selected_role | replace('_', ' ') | title }}' selected, please sign in.
                 </div>
 
+                {# REMOVED: Duplicate logo block that was causing the overlap #}
+                {#
                 <div class="flex justify-end space-x-2 mb-6 absolute top-8 right-8">
                     <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Logo 1" class="h-8">
                     <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Logo 2" class="h-8">
                     <img src="{{ url_for('static', filename='Labs Logo-03.png') }}" alt="Logo 3" class="h-8">
                 </div>
+                #}
                 
                 <h2 class="text-4xl font-bold text-white text-center mb-8">Sign In</h2>
                 
