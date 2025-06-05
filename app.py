@@ -58,6 +58,9 @@ users = {
     # Patient users (no change)
     'House_Patient': {'password_hash': generate_password_hash('password9'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'House', 'dob': '1980-05-15', 'ssn4': '1234', 'patient_id': 'PAT001'}},
     'PatientUser1': {'password_hash': generate_password_hash('patientpass'), 'entities': [], 'role': 'patient', 'patient_details': {'last_name': 'Doe', 'dob': '1990-01-01', 'ssn4': '5678', 'patient_id': 'PAT002'}},
+
+    # Sample user for Business Dev
+    'sample_business_dev': {'password_hash': generate_password_hash('dev_password'), 'entities': MASTER_ENTITIES, 'role': 'business_dev_manager'},
 }
 
 # --- Define Report Types by Role ---
@@ -614,53 +617,76 @@ if __name__ == '__main__':
                 'Main Lab', 'Satellite Clinic', 'Main Lab', 'Satellite Clinic' # Patient data
             ],
             'Reimbursement': [1.98, 150.49, 805.13, 2466.87, 76542.07,
-                              500.00, 750.00, 120.00, 900.00,
-                              300.00, 450.00,
-                              600.00, 150.00, 2500.00,
-                              350.00, 80.00,
-                              38.85,
-                              1200.00, # New row for multi-user test
-                              100.00, 200.00, 150.00, 250.00 # Patient data
+                               500.00, 750.00, 120.00, 900.00,
+                               300.00, 450.00,
+                               600.00, 150.00, 2500.00,
+                               350.00, 80.00,
+                               500.00, # AndrewS bonus test data
+                               700.00, # Multi-user test data
+                               100.00, 200.00, 150.00, 250.00 # Patient data
                               ],
-            'COGS': [50.00, 151.64, 250.00, 1950.00, 30725.00,
-                     200.00, 300.00, 50.00, 400.00,
-                     100.00, 150.00,
-                     250.00, 70.00, 1800.00,
-                     120.00, 30.00,
-                     25.00,
-                     500.00, # New row for multi-user test
-                     20.00, 40.00, 30.00, 50.00 # Patient data
-                     ],
-            'Net': [-48.02, -1.15, 555.13, 516.87, 45817.07,
-                               300.00, 450.00, 70.00, 500.00,
-                               200.00, 300.00,
-                               350.00, 80.00, 700.00,
-                               230.00, 50.00,
-                               13.85,
-                               700.00, # New row for multi-user test
-                               80.00, 160.00, 120.00, 200.00 # Patient data
-                               ],
-            'Commission': [-14.40, -0.34, 166.53, 155.06, 13745.12,
-                               90.00, 135.00, 21.00, 150.00,
-                               60.00, 90.00,
-                               105.00, 24.00, 210.00,
-                               69.00, 15.00,
-                               4.16,
-                               210.00, # New row for multi-user test
-                               24.00, 48.00, 36.00, 60.00 # Patient data
-                               ],
             'Entity': [
-                'AIM Laboratories LLC', 'First Bio Lab of Illinois', 'Stat Labs', 'AMICO Dx LLC', 'Enviro Labs LLC', # March data
-                'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Genetics LLC', 'Stat Labs', # April data
-                'Enviro Labs LLC', 'AMICO Dx LLC', # Feb data
-                'First Bio Lab', 'AIM Laboratories LLC', 'First Bio Lab of Illinois', # More March data
-                'First Bio Genetics LLC', 'Enviro Labs LLC', # More April data
-                'AIM Laboratories LLC', # Specific row for AndrewS bonus report test
-                'First Bio Lab', # New row for multi-user test
+                'First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC', 'AMICO Dx LLC',
+                'Enviro Labs LLC', 'Stat Labs', 'First Bio Lab', 'First Bio Genetics LLC',
+                'First Bio Lab of Illinois', 'AIM Laboratories LLC',
+                'AMICO Dx LLC', 'Enviro Labs LLC', 'Stat Labs',
+                'First Bio Lab', 'First Bio Genetics LLC',
+                'First Bio Lab', # AndrewS bonus test data
+                'First Bio Lab', # Multi-user test data
+                'First Bio Lab', 'First Bio Lab', 'First Bio Lab', 'First Bio Lab' # Patient data
+            ],
+            'Bonus Earned': [
+                0.00, 0.00, 0.00, 0.00, 0.00,
+                0.00, 0.00, 0.00, 0.00,
+                0.00, 0.00,
+                0.00, 0.00, 0.00,
+                0.00, 0.00,
+                50.00, # AndrewS bonus test data
+                70.00, # Multi-user test data
+                0.00, 0.00, 0.00, 0.00 # Patient data
+            ],
+            'Lab Cost': [
+                50.00, 75.00, 100.00, 120.00, 150.00,
+                60.00, 80.00, 90.00, 110.00,
+                70.00, 85.00,
+                95.00, 105.00, 130.00,
+                65.00, 70.00,
+                20.00, # AndrewS bonus test data
+                30.00, # Multi-user test data
+                10.00, 20.00, 15.00, 25.00 # Patient data
+            ],
+            'Other Expense': [
+                5.00, 7.50, 10.00, 12.00, 15.00,
+                6.00, 8.00, 9.00, 11.00,
+                7.00, 8.50,
+                9.50, 10.50, 13.00,
+                6.50, 7.00,
+                2.00, # AndrewS bonus test data
+                3.00, # Multi-user test data
+                1.00, 2.00, 1.50, 2.50 # Patient data
+            ],
+            'Collection Net Amount': [
+                1.98, 150.49, 805.13, 2466.87, 76542.07,
+                500.00, 750.00, 120.00, 900.00,
+                300.00, 450.00,
+                600.00, 150.00, 2500.00,
+                350.00, 80.00,
+                500.00, # AndrewS bonus test data
+                700.00, # Multi-user test data
+                100.00, 200.00, 150.00, 250.00 # Patient data
+            ],
+            'Client': [
+                'Test Client 1', 'Test Client 2', 'Test Client 3', 'Test Client 4', 'Test Client 5',
+                'Client A', 'Client B', 'Client C', 'Client D',
+                'Client X', 'Client Y',
+                'Client Z', 'Client M', 'Client N',
+                'Client P', 'Client Q',
+                'Bonus Client', # Specific row for AndrewS bonus report test
+                'Shared Client', # New row for multi-user test
                 'N/A', 'N/A', 'N/A', 'N/A' # Patient data
             ],
-            'Associated Rep Name': [ # This is for display in the table
-                'House', 'House', 'Sonny A', 'Jay M', 'Bob S',
+            'Representative': [ # Matches existing representative structure
+                'Satish D', 'Agha A', 'Wenjun', 'Jay M', 'Bob S',
                 'Satish D', 'ACG', 'Melinda C', 'Mina K',
                 'Vince O', 'Nick C',
                 'Ashlie T', 'Omar', 'Darang T',
@@ -687,11 +713,12 @@ if __name__ == '__main__':
                 'N/A', 'N/A',
                 'N/A',
                 'N/A',
-                'PAT001', 'PAT001', 'PAT002', 'PAT002' # Link to patient_id in users dict
+                'PAT001', 'PAT001', 'PAT002', 'PAT002' # Patient data
             ]
         }
-        dummy_df = pd.DataFrame(dummy_data)
-        dummy_df.to_csv('data.csv', index=False)
-        print("Created dummy data.csv for demonstration.")
+        df = pd.DataFrame(dummy_data)
+        df['Date'] = pd.to_datetime(df['Date']) # Ensure 'Date' column is datetime
+        df.to_csv('data.csv', index=False)
+        print("Created dummy data.csv file.")
 
     app.run(debug=True)
