@@ -1,15 +1,12 @@
 import os
 import pandas as pd
-from flask import Flask, render_template, request, redirect, session, url_for, flash, send_from_directory # Import send_from_directory
+from flask import Flask, render_template, request, redirect, session, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_moment import Moment # Add this line
 import datetime
 import re # Import the regular expression module
-from functools import wraps # Needed for login_required decorator
 
 # Initialize the Flask application
 app = Flask(__name__)
-moment = Moment(app) # Add this line to initialize Flask-Moment
 
 # --- Configuration ---
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_random_key_here_replace_me_in_production')
@@ -125,145 +122,6 @@ try:
     print("data.csv loaded successfully.")
 except FileNotFoundError:
     print("Error: data.csv not found. Please ensure the file is in the same directory as app.py. Dummy data will be created.")
-    # Create dummy data.csv if it doesn't exist, with new columns and example data
-    dummy_data = {
-        'Date': [
-            '2025-03-12', '2025-03-15', '2025-03-18', '2025-03-20', '2025-03-22', # March 2025 data
-            '2025-04-01', '2025-04-05', '2025-04-10', '2025-04-15', # April 2025 data
-            '2025-02-01', '2025-02-05', # February 2025 data
-            '2025-03-25', '2025-03-28', '2025-03-30', # More March data
-            '2025-04-20', '2025-04-22', # More April data
-            '2025-02-01', # Specific row for AndrewS bonus report test
-            '2025-03-01', # New row for multi-user test
-            '2025-01-10', '2025-02-15', '2025-03-20', '2025-04-25', # Patient data
-            '2025-05-01' # New row for sample_business_dev
-        ],
-        'Location': [
-            'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
-            'HOPESS RESIDENTIAL TREATMENT', 'JACKSON MEDICAL CENTER', 'TRIBE RECOVERY HOMES',
-            'TEST LOCATION A', 'TEST LOCATION B', 'TEST LOCATION C', 'TEST LOCATION D',
-            'OLD LOCATION X', 'OLD LOCATION Y',
-            'NEW CLINIC Z', 'URGENT CARE A', 'HOSPITAL B',
-            'HEALTH CENTER C', 'WELLNESS SPA D',
-            'BETA TEST LOCATION', # Specific row for AndrewS bonus report test
-            'SHARED PERFORMANCE CLINIC', # New row for multi-user test
-            'Main Lab', 'Satellite Clinic', 'Main Lab', 'Satellite Clinic', # Patient data
-            'BUSINESS DEV OFFICE' # New row for sample_business_dev
-        ],
-        'Entity': [
-            'First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC', 'AMICO Dx LLC',
-            'Enviro Labs LLC', 'Stat Labs', 'First Bio Lab', 'First Bio Genetics LLC',
-            'AIM Laboratories LLC', 'AMICO Dx LLC',
-            'Enviro Labs LLC', 'Stat Labs', 'First Bio Lab',
-            'First Bio Genetics LLC', 'First Bio Lab of Illinois',
-            'AIM Laboratories LLC', # Entity for AndrewS bonus report test
-            'First Bio Lab', # Entity for multi-user test
-            'First Bio Lab', 'First Bio Lab', 'First Bio Lab', 'First Bio Lab', # Patient data
-            'First Bio Lab' # New row for sample_business_dev, choose an entity available to this user
-        ],
-        'Bonus': [
-            1000, 1500, 800, 2000, 1200,
-            1100, 900, 1300, 1600,
-            700, 1800,
-            1400, 950, 1700,
-            600, 1050,
-            5000, # Bonus for AndrewS
-            7500, # Bonus for multi-user test
-            0, 0, 0, 0, # Patient data (no bonus)
-            0 # Bonus for sample_business_dev (adjust as needed)
-        ],
-        'Sales Representative': [
-            'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
-            'SatishD', 'ACG', 'MelindaC', 'MinaK',
-            'VinceO', 'NickC',
-            'AshlieT', 'Omar', 'DarangT',
-            'Andrew', 'JayM',
-            'Andrew S', # Specific row for AndrewS bonus report test
-            'Andrew S, Melinda C', # New row for multi-user test
-            'N/A', 'N/A', 'N/A', 'N/A', # Patient data
-            'Sample Business Dev' # New row for sample_business_dev
-        ],
-        'Username': [ # NEW COLUMN - For filtering, must match login username
-            'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
-            'SatishD', 'ACG', 'MelindaC', 'MinaK',
-            'VinceO', 'NickC',
-            'AshlieT', 'Omar', 'DarangT',
-            'Andrew', 'JayM',
-            'AndrewS', # Matches AndrewS login username
-            'AndrewS,MelindaC', # Allows both AndrewS and MelindaC to see this line
-            'House_Patient', 'House_Patient', 'PatientUser1', 'PatientUser1', # Patient data
-            'sample_business_dev' # New row for sample_business_dev
-        ],
-        'PatientID': [
-            'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-            'N/A', 'N/A', 'N/A', 'N/A',
-            'N/A', 'N/A',
-            'N/A', 'N/A', 'N/A',
-            'N/A', 'N/A',
-            'N/A',
-            'N/A',
-            'PAT001', 'PAT001', 'PAT002', 'PAT002', # Patient data
-            'N/A' # New row for sample_business_dev
-        ],
-        'TestResult': [
-            'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-            'N/A', 'N/A', 'N/A', 'N/A',
-            'N/A', 'N/A',
-            'N/A', 'N/A', 'N/A',
-            'N/A', 'N/A',
-            'N/A',
-            'N/A',
-            'Positive', 'Negative', 'Positive', 'Negative', # Patient data
-            'N/A' # TestResult for sample_business_dev
-        ],
-         'Reimbursement': [ # Added back Reimbursement, COGS, Net, Commission for Monthly Bonus Report
-            1.98, 150.49, 805.13, 2466.87, 76542.07,
-            500.00, 750.00, 120.00, 900.00,
-            300.00, 450.00,
-            600.00, 150.00, 2500.00,
-            350.00, 80.00,
-            38.85,
-            1200.00,
-            100.00, 200.00, 150.00, 250.00,
-            750.00 # New row for sample_business_dev
-        ],
-        'COGS': [
-            50.00, 151.64, 250.00, 1950.00, 30725.00,
-            200.00, 300.00, 50.00, 400.00,
-            100.00, 150.00,
-            250.00, 70.00, 1800.00,
-            120.00, 30.00,
-            25.00,
-            500.00,
-            20.00, 40.00, 30.00, 50.00,
-            200.00 # New row for sample_business_dev
-        ],
-        'Net': [
-            -48.02, -1.15, 555.13, 516.87, 45817.07,
-            300.00, 450.00, 70.00, 500.00,
-            200.00, 300.00,
-            350.00, 80.00, 700.00,
-            230.00, 50.00,
-            13.85,
-            700.00,
-            80.00, 160.00, 120.00, 200.00,
-            550.00 # New row for sample_business_dev
-        ],
-        'Commission': [
-            -14.40, -0.34, 166.53, 155.06, 13745.12,
-            90.00, 135.00, 21.00, 150.00,
-            60.00, 90.00,
-            105.00, 24.00, 210.00,
-            69.00, 15.00,
-            4.16,
-            210.00,
-            24.00, 48.00, 36.00, 60.00,
-            165.00 # New row for sample_business_dev
-        ]
-    }
-    df = pd.DataFrame(dummy_data)
-    df.to_csv('data.csv', index=False)
-    print("Created dummy data.csv file.")
 except Exception as e:
     print(f"An error occurred while loading data.csv: {e}")
 
@@ -285,16 +143,14 @@ def inject_global_data():
                 months=MONTHS,
                 years=YEARS,
                 current_app_year=CURRENT_APP_YEAR,
-                current_username=username, # Pass current username for display in base template
-                moment=moment # NEW: Pass the moment object to all templates
+                current_username=username # Pass current username for display in base template
             )
     return dict(
         MASTER_ENTITIES=MASTER_ENTITIES,
         months=MONTHS,
         years=YEARS,
         current_app_year=CURRENT_APP_YEAR,
-        current_username=None, # No user logged in
-        moment=moment # NEW: Pass the moment object even if no user is logged in
+        current_username=None # No user logged in
     )
 
 # --- Routes ---
@@ -611,43 +467,37 @@ def dashboard():
         return redirect(url_for('select_report')) # Redirect back to selection page with error
 
 
-    filtered_data = pd.DataFrame() # Initialize empty DataFrame
+    filtered_data = pd.DataFrame()
 
-    # Load the data for processing if monthly_bonus. patient_reports redirects to patient_results route which handles its own data loading.
-    if report_type == 'monthly_bonus':
+    if rep in UNFILTERED_ACCESS_USERS:
         if not df.empty:
             filtered_data = df.copy()
-            # Ensure numeric columns are actually numeric for calculations
-            for col in ['Reimbursement', 'COGS', 'Net', 'Commission']:
-                filtered_data[col] = pd.to_numeric(filtered_data[col], errors='coerce').fillna(0)
-            
-            # Ensure 'Date' is datetime for filtering
-            if not pd.api.types.is_datetime64_any_dtype(filtered_data['Date']):
-                filtered_data['Date'] = pd.to_datetime(filtered_data['Date'], errors='coerce')
-            filtered_data.dropna(subset=['Date'], inplace=True) # Drop rows where date conversion failed
-
-            if 'Month' not in filtered_data.columns:
-                 filtered_data['Month'] = filtered_data['Date'].dt.to_period('M')
-            if 'Year' not in filtered_data.columns:
-                filtered_data['Year'] = filtered_data['Date'].dt.year
-
-            # Apply general filtering for authorized entities/users
-            if rep in UNFILTERED_ACCESS_USERS:
-                # No additional filtering for unfiltered users
-                print(f"User {rep} has unfiltered access. Displaying all data.")
-            elif 'Entity' in filtered_data.columns:
-                if selected_entity:
-                    filtered_data = filtered_data[filtered_data['Entity'] == selected_entity].copy()
-                else:
-                    # Fallback, though selected_entity should be validated before this point
-                    print(f"Warning: Selected entity not found. Cannot filter for entity '{selected_entity}'. Displaying all authorized data.")
-                    # If selected_entity is None, filter by entities allowed to the user
-                    filtered_data = filtered_data[filtered_data['Entity'].isin(user_authorized_entities)].copy()
-            else:
-                print(f"Warning: 'Entity' column not found in data.csv. Cannot filter by entity.")
+        print(f"User {rep} has unfiltered access. Displaying all data.")
+    elif not df.empty and 'Entity' in df.columns:
+        if selected_entity:
+            filtered_data = df[df['Entity'] == selected_entity].copy()
         else:
-            print("Warning: data.csv is empty. No data to filter for monthly bonus report.")
+            filtered_data = df.copy() # Should not happen if selected_entity is validated above
 
+        if selected_month and selected_year and 'Date' in filtered_data.columns:
+            if not pd.api.types.is_datetime64_any_dtype(filtered_data['Date']):
+                filtered_data['Date'] = pd.to_datetime(filtered_data['Date'])
+            
+            filtered_data = filtered_data[
+                (filtered_data['Date'].dt.month == selected_month) &
+                (filtered_data['Date'].dt.year == selected_year)
+            ]
+        
+        if report_type == 'monthly_bonus' and 'Username' in filtered_data.columns:
+            normalized_username = rep.strip().lower()
+            filtered_data['Username'] = filtered_data['Username'].astype(str)
+            regex_pattern = r'\b' + re.escape(normalized_username) + r'\b'
+            filtered_data = filtered_data[
+                filtered_data['Username'].str.strip().str.lower().str.contains(regex_pattern, na=False)
+            ]
+            print(f"User {rep} (non-unfiltered) viewing monthly bonus report. Filtered by 'Username' column.")
+    else:
+        print(f"Warning: 'Entity' column not found in data.csv or data.csv is empty. Cannot filter for entity '{selected_entity}'.")
 
     if report_type == 'financials':
         files_to_display = {}
@@ -668,9 +518,6 @@ def dashboard():
                         'name': f"{report_def['display_name_part']} - {year_val} - {report_def['basis']}",
                         'webViewLink': url_for('static', filename=filename_to_create)
                     })
-                # else: # Optional: print a message if the file is not found
-                #     print(f"Financial report PDF not found: {filepath_check}")
-
             if year_reports:
                 files_to_display[year_val] = year_reports
 
@@ -679,117 +526,44 @@ def dashboard():
             selected_entity=selected_entity,
             report_type=report_type,
             files=files_to_display,
-            data=[], # CORRECTED: Ensure no data overview is passed for financials
-            user_role=user_role # Ensure user_role is passed
+            data=filtered_data.to_dict(orient='records') # Pass filtered_data for the table
         )
     elif report_type == 'monthly_bonus':
-        # Apply specific monthly bonus filtering and calculations
-        if 'Username' in filtered_data.columns:
-            normalized_username = rep.strip().lower()
-            filtered_data['Username'] = filtered_data['Username'].astype(str)
-            regex_pattern = r'\b' + re.escape(normalized_username) + r'\b'
-            filtered_data = filtered_data[
-                filtered_data['Username'].str.strip().str.lower().str.contains(regex_pattern, na=False)
-            ]
-            print(f"User {rep} (non-unfiltered) viewing monthly bonus report. Filtered by 'Username' column.")
-        
-        if selected_month and selected_month != '-- Select Month --' and 'Month' in filtered_data.columns:
-            try:
-                filtered_data = filtered_data[filtered_data['Month'] == pd.Period(f"{selected_year}-{str(selected_month).zfill(2)}")]
-            except Exception as e:
-                flash(f"Error filtering by month: {e}", "error")
-                print(f"Error filtering by month: {e}")
-        if selected_year and selected_year != '-- Select Year --' and 'Year' in filtered_data.columns:
-            try:
-                filtered_data = filtered_data[filtered_data['Year'] == int(selected_year)]
-            except Exception as e:
-                flash(f"Error filtering by year: {e}", "error")
-                print(f"Error filtering by year: {e}")
-
-
-        # Calculate bonus percentages based on Reimbursement and Net
-        # Ensure columns exist before calculation to avoid KeyError
-        if 'Reimbursement' in filtered_data.columns:
-            filtered_data['Bonus_Percentage_Reimbursement'] = filtered_data['Reimbursement'] * 0.05
-        else:
-            filtered_data['Bonus_Percentage_Reimbursement'] = 0 # Default if column missing
-            flash("Warning: 'Reimbursement' column not found for bonus calculation.", "warning")
-
-        if 'Net' in filtered_data.columns:
-            filtered_data['Bonus_Percentage_Net'] = filtered_data['Net'] * 0.15
-        else:
-            filtered_data['Bonus_Percentage_Net'] = 0 # Default if column missing
-            flash("Warning: 'Net' column not found for bonus calculation.", "warning")
-
-
-        # Group by 'Associated Rep Name' and sum up the bonus percentages
-        # Ensure 'Associated Rep Name' exists before grouping
-        if 'Associated Rep Name' in filtered_data.columns:
-            monthly_bonus_data = filtered_data.groupby('Associated Rep Name').agg(
-                Total_Reimbursement=('Reimbursement', 'sum'),
-                Total_Net=('Net', 'sum'),
-                Total_Bonus_Reimbursement=('Bonus_Percentage_Reimbursement', 'sum'),
-                Total_Bonus_Net=('Bonus_Percentage_Net', 'sum')
-            ).round(2).to_dict(orient='index')
-        else:
-            monthly_bonus_data = {}
-            flash("Warning: 'Associated Rep Name' column not found for bonus report grouping.", "warning")
-
-
         return render_template(
             'monthly_bonus.html',
-            data=filtered_data.to_dict(orient='records'), # Pass the raw filtered data to monthly_bonus.html if needed
-            monthly_bonus_data=monthly_bonus_data, # Pass the aggregated bonus data
+            data=filtered_data.to_dict(orient='records'),
             selected_entity=selected_entity,
             report_type=report_type,
             selected_month=selected_month,
-            selected_year=selected_year,
-            user_role=user_role # Ensure user_role is passed
+            selected_year=selected_year
         )
     elif report_type == 'requisitions':
-        # Assuming requisitions is a static PDF
-        pdf_filename = f"{selected_entity} - Requisitions.pdf" # Adjust filename convention as needed
-        filepath_check = os.path.join(app.static_folder, pdf_filename)
-        if os.path.exists(filepath_check):
-            return send_from_directory(app.static_folder, pdf_filename)
-        else:
-            flash(f'Requisitions report file "{pdf_filename}" not found in static folder.', 'danger')
-            return render_template(
-                'dashboard.html',
-                selected_entity=selected_entity,
-                report_type=report_type,
-                files={}, # No files to display if PDF not found
-                data=[],
-                user_role=user_role
-            )
+        return render_template(
+            'generic_report.html',
+            report_title="Requisitions Report",
+            message=f"Requisitions report for {selected_entity} is under development."
+        )
     elif report_type == 'marketing_material':
         files_to_display = {}
-        # Assuming marketing materials are entity-specific PDFs
         if selected_entity:
             entity_files = []
             for report_def in MARKETING_REPORT_DEFINITIONS:
                 filename = f"{selected_entity} - {report_def['display_name_part']}.pdf"
-                filepath_check = os.path.join(app.static_folder, filename)
+                filepath_check = os.path.join('static', filename)
                 if os.path.exists(filepath_check):
                     entity_files.append({
                         'name': f"{report_def['display_name_part']} for {selected_entity}",
                         'webViewLink': url_for('static', filename=filename)
                     })
-                # else: # Optional: print a message if the file is not found
-                #     print(f"Marketing material PDF not found: {filepath_check}")
-
             if entity_files:
                 files_to_display[selected_entity] = entity_files
-            else:
-                 flash(f'No marketing materials found for {selected_entity}.', 'info')
         else:
             # Fallback for displaying all entities' marketing materials if no specific entity is chosen
-            # This part still works if you have generic marketing PDFs without entity prefix
             for entity in MASTER_ENTITIES:
                 entity_files = []
                 for report_def in MARKETING_REPORT_DEFINITIONS:
                     filename = f"{entity} - {report_def['display_name_part']}.pdf"
-                    filepath_check = os.path.join(app.static_folder, filename)
+                    filepath_check = os.path.join('static', filename)
                     if os.path.exists(filepath_check):
                         entity_files.append({
                             'name': f"{report_def['display_name_part']} for {entity}",
@@ -797,18 +571,13 @@ def dashboard():
                         })
                 if entity_files:
                     files_to_display[entity] = entity_files
-            
-            if not files_to_display:
-                flash('No marketing materials found across all entities.', 'info')
-
 
         return render_template(
             'dashboard.html',
             selected_entity=selected_entity,
             report_type=report_type,
             files=files_to_display,
-            data=[], # CORRECTED: Ensure no data overview is passed for marketing materials
-            user_role=user_role
+            data=[]
         )
     elif report_type == 'patient_reports':
         # This case should ideally be handled by redirecting to patient_results directly from select_report
@@ -817,17 +586,6 @@ def dashboard():
     else:
         flash("Invalid report type selected.", "error")
         return redirect(url_for('select_report'))
-
-# --- Default return for GET request to /dashboard or if no report_type is selected ---
-    return render_template(
-        'dashboard.html',
-        selected_entity=selected_entity,
-        report_type=report_type,
-        files={}, # Default to empty files if no report type selected or error
-        data=[], # Default to empty data if no report type selected or error
-        user_role=user_role # Ensure user_role is passed
-    )
-
 
 @app.route('/logout')
 def logout():
@@ -893,8 +651,7 @@ if __name__ == '__main__':
                 '2025-04-20', '2025-04-22', # More April data
                 '2025-02-01', # Specific row for AndrewS bonus report test
                 '2025-03-01', # New row for multi-user test
-                '2025-01-10', '2025-02-15', '2025-03-20', '2025-04-25', # Patient data
-                '2025-05-01' # New row for sample_business_dev
+                '2025-01-10', '2025-02-15', '2025-03-20', '2025-04-25' # Patient data
             ],
             'Location': [
                 'CENTRAL KENTUCKY SPINE SURGERY - TOX', 'FAIRVIEW HEIGHTS MEDICAL GROUP - CLINICA',
@@ -905,8 +662,7 @@ if __name__ == '__main__':
                 'HEALTH CENTER C', 'WELLNESS SPA D',
                 'BETA TEST LOCATION', # Specific row for AndrewS bonus report test
                 'SHARED PERFORMANCE CLINIC', # New row for multi-user test
-                'Main Lab', 'Satellite Clinic', 'Main Lab', 'Satellite Clinic', # Patient data
-                'BUSINESS DEV OFFICE' # New row for sample_business_dev
+                'Main Lab', 'Satellite Clinic', 'Main Lab', 'Satellite Clinic' # Patient data
             ],
             'Entity': [
                 'First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC', 'AMICO Dx LLC',
@@ -916,8 +672,7 @@ if __name__ == '__main__':
                 'First Bio Genetics LLC', 'First Bio Lab of Illinois',
                 'AIM Laboratories LLC', # Entity for AndrewS bonus report test
                 'First Bio Lab', # Entity for multi-user test
-                'First Bio Lab', 'First Bio Lab', 'First Bio Lab', 'First Bio Lab', # Patient data
-                'First Bio Lab' # New row for sample_business_dev, choose an entity available to this user
+                'First Bio Lab', 'First Bio Lab', 'First Bio Lab', 'First Bio Lab' # Patient data
             ],
             'Bonus': [
                 1000, 1500, 800, 2000, 1200,
@@ -927,8 +682,7 @@ if __name__ == '__main__':
                 600, 1050,
                 5000, # Bonus for AndrewS
                 7500, # Bonus for multi-user test
-                0, 0, 0, 0, # Patient data (no bonus)
-                0 # Bonus for sample_business_dev (adjust as needed)
+                0, 0, 0, 0 # Patient data (no bonus)
             ],
             'Sales Representative': [
                 'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
@@ -938,8 +692,7 @@ if __name__ == '__main__':
                 'Andrew', 'JayM',
                 'Andrew S', # Specific row for AndrewS bonus report test
                 'Andrew S, Melinda C', # New row for multi-user test
-                'N/A', 'N/A', 'N/A', 'N/A', # Patient data
-                'Sample Business Dev' # New row for sample_business_dev
+                'N/A', 'N/A', 'N/A', 'N/A' # Patient data
             ],
             'Username': [ # NEW COLUMN - For filtering, must match login username
                 'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
@@ -949,8 +702,7 @@ if __name__ == '__main__':
                 'Andrew', 'JayM',
                 'AndrewS', # Matches AndrewS login username
                 'AndrewS,MelindaC', # Allows both AndrewS and MelindaC to see this line
-                'House_Patient', 'House_Patient', 'PatientUser1', 'PatientUser1', # Patient data
-                'sample_business_dev' # New row for sample_business_dev
+                'House_Patient', 'House_Patient', 'PatientUser1', 'PatientUser1' # Patient data
             ],
             'PatientID': [
                 'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
@@ -960,8 +712,7 @@ if __name__ == '__main__':
                 'N/A', 'N/A',
                 'N/A',
                 'N/A',
-                'PAT001', 'PAT001', 'PAT002', 'PAT002', # Patient data
-                'N/A' # New row for sample_business_dev
+                'PAT001', 'PAT001', 'PAT002', 'PAT002' # Patient data
             ],
             'TestResult': [
                 'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
@@ -971,56 +722,10 @@ if __name__ == '__main__':
                 'N/A', 'N/A',
                 'N/A',
                 'N/A',
-                'Positive', 'Negative', 'Positive', 'Negative', # Patient data
-                'N/A' # TestResult for sample_business_dev
-            ],
-             'Reimbursement': [ # Added back Reimbursement, COGS, Net, Commission for Monthly Bonus Report
-                1.98, 150.49, 805.13, 2466.87, 76542.07,
-                500.00, 750.00, 120.00, 900.00,
-                300.00, 450.00,
-                600.00, 150.00, 2500.00,
-                350.00, 80.00,
-                38.85,
-                1200.00,
-                100.00, 200.00, 150.00, 250.00,
-                750.00 # New row for sample_business_dev
-            ],
-            'COGS': [
-                50.00, 151.64, 250.00, 1950.00, 30725.00,
-                200.00, 300.00, 50.00, 400.00,
-                100.00, 150.00,
-                250.00, 70.00, 1800.00,
-                120.00, 30.00,
-                25.00,
-                500.00,
-                20.00, 40.00, 30.00, 50.00,
-                200.00 # New row for sample_business_dev
-            ],
-            'Net': [
-                -48.02, -1.15, 555.13, 516.87, 45817.07,
-                300.00, 450.00, 70.00, 500.00,
-                200.00, 300.00,
-                350.00, 80.00, 700.00,
-                230.00, 50.00,
-                13.85,
-                700.00,
-                80.00, 160.00, 120.00, 200.00,
-                550.00 # New row for sample_business_dev
-            ],
-            'Commission': [
-                -14.40, -0.34, 166.53, 155.06, 13745.12,
-                90.00, 135.00, 21.00, 150.00,
-                60.00, 90.00,
-                105.00, 24.00, 210.00,
-                69.00, 15.00,
-                4.16,
-                210.00,
-                24.00, 48.00, 36.00, 60.00,
-                165.00 # New row for sample_business_dev
+                'Positive', 'Negative', 'Positive', 'Negative' # Patient data
             ]
         }
-    df = pd.DataFrame(dummy_data)
-    df.to_csv('data.csv', index=False)
-    print("Created dummy data.csv file.")
+        pd.DataFrame(dummy_data).to_csv('data.csv', index=False)
+        print("Created dummy data.csv file.")
 
     app.run(debug=True)
