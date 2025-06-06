@@ -38,7 +38,7 @@ users = {
     'JayM': {'password_hash': generate_password_hash('password6'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
     'ACG': {'password_hash': generate_password_hash('password2'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
     'MelindaC': {'password_hash': generate_password_hash('password4'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
-    'NickT': {'password_hash': generate_password_hash('jntlaw'), 'entities': MASTER_ENTELLCITIES, 'role': 'admin'}, # Confirmed full access
+    'NickT': {'password_hash': generate_password_hash('jntlaw'), 'entities': MASTER_ENTITIES, 'role': 'admin'}, # Confirmed full access
 
     # Admins with Specific Limited Access (based on your latest instructions)
     'AghaA': {'password_hash': generate_password_hash('agapass'), 'entities': ['AIM Laboratories LLC'], 'role': 'admin'},
