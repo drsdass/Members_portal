@@ -95,6 +95,13 @@ FINANCIAL_REPORT_DEFINITIONS = [
     {'display_name_part': 'YTD Management Report', 'basis': 'Cash Basis', 'file_suffix': '-YTD Management Report - Cash Basis', 'applicable_years': [2025]}
 ]
 
+# --- Marketing Report Definitions ---
+MARKETING_REPORT_DEFINITIONS = [
+    {'display_name_part': 'Product Catalog', 'file_suffix': '-Product Catalog'},
+    {'display_name_part': 'Service Brochure', 'file_suffix': '-Service Brochure'},
+    {'display_name_part': 'Company Profile', 'file_suffix': '-Company Profile'}
+]
+
 # Global lists for months and years (for dropdowns)
 MONTHS = [
     {'value': 1, 'name': 'January'}, {'value': 2, 'name': 'February'},
@@ -537,10 +544,40 @@ def dashboard():
             message=f"Requisitions report for {selected_entity} is under development."
         )
     elif report_type == 'marketing_material':
+        files_to_display = {}
+        if selected_entity:
+            entity_files = []
+            for report_def in MARKETING_REPORT_DEFINITIONS:
+                filename = f"{selected_entity} - {report_def['display_name_part']}.pdf"
+                filepath_check = os.path.join('static', filename)
+                if os.path.exists(filepath_check):
+                    entity_files.append({
+                        'name': f"{report_def['display_name_part']} for {selected_entity}",
+                        'webViewLink': url_for('static', filename=filename)
+                    })
+            if entity_files:
+                files_to_display[selected_entity] = entity_files
+        else:
+            # Fallback for displaying all entities' marketing materials if no specific entity is chosen
+            for entity in MASTER_ENTITIES:
+                entity_files = []
+                for report_def in MARKETING_REPORT_DEFINITIONS:
+                    filename = f"{entity} - {report_def['display_name_part']}.pdf"
+                    filepath_check = os.path.join('static', filename)
+                    if os.path.exists(filepath_check):
+                        entity_files.append({
+                            'name': f"{report_def['display_name_part']} for {entity}",
+                            'webViewLink': url_for('static', filename=filename)
+                        })
+                if entity_files:
+                    files_to_display[entity] = entity_files
+
         return render_template(
-            'generic_report.html',
-            report_title="Marketing Material Report",
-            message=f"Marketing Material for {selected_entity} is under development."
+            'dashboard.html',
+            selected_entity=selected_entity,
+            report_type=report_type,
+            files=files_to_display,
+            data=[]
         )
     elif report_type == 'patient_reports':
         # This case should ideally be handled by redirecting to patient_results directly from select_report
@@ -575,6 +612,17 @@ if __name__ == '__main__':
                         f.write(f"This is a dummy PDF file for {entity} - {year_val} {report_def['display_name_part']} ({report_def['basis']})")
                     print(f"Created dummy file: {filepath}")
 
+    # Create dummy PDF files for marketing materials (entity-specific)
+    for entity in MASTER_ENTITIES:
+        for report_def in MARKETING_REPORT_DEFINITIONS:
+            filename_to_create = f"{entity} - {report_def['display_name_part']}.pdf"
+            filepath = os.path.join('static', filename_to_create)
+
+            if not os.path.exists(filepath):
+                with open(filepath, 'w') as f:
+                    f.write(f"This is a dummy PDF file for {entity} - {report_def['display_name_part']}.")
+                print(f"Created dummy file: {filepath}")
+
     # Create dummy PDF files for patient results
     dummy_patient_ids = [details['patient_id'] for user, details in users.items() if details.get('role') == 'patient' and 'patient_details' in details]
     dummy_locations_for_patients = ['Main Lab', 'Satellite Clinic', 'Remote Testing Site']
@@ -588,8 +636,8 @@ if __name__ == '__main__':
                 filepath = os.path.join('static', dummy_pdf_filename)
                 if not os.path.exists(filepath):
                     with open(filepath, 'w') as f:
-                        f.write(f"This is a dummy PDF for Patient {pid}, DOS {report_date}, Report {i} from {location}.")
-                    print(f"Created dummy patient file: {filepath}")
+                        f.write(f"This is a dummy PDF file for Patient {pid}, DOS {report_date}, Report {i} from {location}.")
+                    print(f"Created dummy patient result file: {filepath}")
 
 
     # Create dummy data.csv if it doesn't exist, with new columns and example data
