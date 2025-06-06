@@ -2,13 +2,11 @@ import os
 import pandas as pd
 from flask import Flask, render_template, request, redirect, session, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-from flask_moment import Moment # Add this line
 import datetime
 import re # Import the regular expression module
 
 # Initialize the Flask application
 app = Flask(__name__)
-moment = Moment(app) # Add this line to initialize Flask-Moment
 
 # --- Configuration ---
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_random_key_here_replace_me_in_production')
@@ -666,32 +664,81 @@ if __name__ == '__main__':
                 'SHARED PERFORMANCE CLINIC', # New row for multi-user test
                 'Main Lab', 'Satellite Clinic', 'Main Lab', 'Satellite Clinic' # Patient data
             ],
+            'Reimbursement': [1.98, 150.49, 805.13, 2466.87, 76542.07,
+                               500.00, 750.00, 120.00, 900.00,
+                               300.00, 450.00,
+                               600.00, 150.00, 2500.00,
+                               350.00, 80.00,
+                               500.00, # AndrewS bonus test data
+                               700.00, # Multi-user test data
+                               100.00, 200.00, 150.00, 250.00 # Patient data
+                              ],
             'Entity': [
                 'First Bio Lab', 'First Bio Genetics LLC', 'First Bio Lab of Illinois', 'AIM Laboratories LLC', 'AMICO Dx LLC',
                 'Enviro Labs LLC', 'Stat Labs', 'First Bio Lab', 'First Bio Genetics LLC',
-                'AIM Laboratories LLC', 'AMICO Dx LLC',
-                'Enviro Labs LLC', 'Stat Labs', 'First Bio Lab',
-                'First Bio Genetics LLC', 'First Bio Lab of Illinois',
-                'AIM Laboratories LLC', # Entity for AndrewS bonus report test
-                'First Bio Lab', # Entity for multi-user test
+                'First Bio Lab of Illinois', 'AIM Laboratories LLC',
+                'AMICO Dx LLC', 'Enviro Labs LLC', 'Stat Labs',
+                'First Bio Lab', 'First Bio Genetics LLC',
+                'First Bio Lab', # AndrewS bonus test data
+                'First Bio Lab', # Multi-user test data
                 'First Bio Lab', 'First Bio Lab', 'First Bio Lab', 'First Bio Lab' # Patient data
             ],
-            'Bonus': [
-                1000, 1500, 800, 2000, 1200,
-                1100, 900, 1300, 1600,
-                700, 1800,
-                1400, 950, 1700,
-                600, 1050,
-                5000, # Bonus for AndrewS
-                7500, # Bonus for multi-user test
-                0, 0, 0, 0 # Patient data (no bonus)
+            'Bonus Earned': [
+                0.00, 0.00, 0.00, 0.00, 0.00,
+                0.00, 0.00, 0.00, 0.00,
+                0.00, 0.00,
+                0.00, 0.00, 0.00,
+                0.00, 0.00,
+                50.00, # AndrewS bonus test data
+                70.00, # Multi-user test data
+                0.00, 0.00, 0.00, 0.00 # Patient data
             ],
-            'Sales Representative': [
-                'House_Patient', 'House_Patient', 'SonnyA', 'JayM', 'BobS',
-                'SatishD', 'ACG', 'MelindaC', 'MinaK',
-                'VinceO', 'NickC',
-                'AshlieT', 'Omar', 'DarangT',
-                'Andrew', 'JayM',
+            'Lab Cost': [
+                50.00, 75.00, 100.00, 120.00, 150.00,
+                60.00, 80.00, 90.00, 110.00,
+                70.00, 85.00,
+                95.00, 105.00, 130.00,
+                65.00, 70.00,
+                20.00, # AndrewS bonus test data
+                30.00, # Multi-user test data
+                10.00, 20.00, 15.00, 25.00 # Patient data
+            ],
+            'Other Expense': [
+                5.00, 7.50, 10.00, 12.00, 15.00,
+                6.00, 8.00, 9.00, 11.00,
+                7.00, 8.50,
+                9.50, 10.50, 13.00,
+                6.50, 7.00,
+                2.00, # AndrewS bonus test data
+                3.00, # Multi-user test data
+                1.00, 2.00, 1.50, 2.50 # Patient data
+            ],
+            'Collection Net Amount': [
+                1.98, 150.49, 805.13, 2466.87, 76542.07,
+                500.00, 750.00, 120.00, 900.00,
+                300.00, 450.00,
+                600.00, 150.00, 2500.00,
+                350.00, 80.00,
+                500.00, # AndrewS bonus test data
+                700.00, # Multi-user test data
+                100.00, 200.00, 150.00, 250.00 # Patient data
+            ],
+            'Client': [
+                'Test Client 1', 'Test Client 2', 'Test Client 3', 'Test Client 4', 'Test Client 5',
+                'Client A', 'Client B', 'Client C', 'Client D',
+                'Client X', 'Client Y',
+                'Client Z', 'Client M', 'Client N',
+                'Client P', 'Client Q',
+                'Bonus Client', # Specific row for AndrewS bonus report test
+                'Shared Client', # New row for multi-user test
+                'N/A', 'N/A', 'N/A', 'N/A' # Patient data
+            ],
+            'Representative': [ # Matches existing representative structure
+                'Satish D', 'Agha A', 'Wenjun', 'Jay M', 'Bob S',
+                'Satish D', 'ACG', 'Melinda C', 'Mina K',
+                'Vince O', 'Nick C',
+                'Ashlie T', 'Omar', 'Darang T',
+                'Andrew', 'Jay M',
                 'Andrew S', # Specific row for AndrewS bonus report test
                 'Andrew S, Melinda C', # New row for multi-user test
                 'N/A', 'N/A', 'N/A', 'N/A' # Patient data
@@ -715,19 +762,11 @@ if __name__ == '__main__':
                 'N/A',
                 'N/A',
                 'PAT001', 'PAT001', 'PAT002', 'PAT002' # Patient data
-            ],
-            'TestResult': [
-                'N/A', 'N/A', 'N/A', 'N/A', 'N/A',
-                'N/A', 'N/A', 'N/A', 'N/A',
-                'N/A', 'N/A',
-                'N/A', 'N/A', 'N/A',
-                'N/A', 'N/A',
-                'N/A',
-                'N/A',
-                'Positive', 'Negative', 'Positive', 'Negative' # Patient data
             ]
         }
-        pd.DataFrame(dummy_data).to_csv('data.csv', index=False)
+        df = pd.DataFrame(dummy_data)
+        df['Date'] = pd.to_datetime(df['Date']) # Ensure 'Date' column is datetime
+        df.to_csv('data.csv', index=False)
         print("Created dummy data.csv file.")
 
     app.run(debug=True)
