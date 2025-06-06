@@ -8,6 +8,7 @@ import re # Import the regular expression module
 
 # Initialize the Flask application
 app = Flask(__name__)
+moment = Moment(app) # Add this line to initialize Flask-Moment
 
 # --- Configuration ---
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_random_key_here_replace_me_in_production')
