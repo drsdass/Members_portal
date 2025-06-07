@@ -1,4 +1,4 @@
-app.py
+
 import os
 import pandas as pd
 from flask import Flask, render_template, request, redirect, session, url_for, flash, send_from_directory
@@ -10,7 +10,7 @@ from functools import wraps
 
 # Initialize the Flask application
 app = Flask(__name__)
-moment = app) # Initialize Flask-Moment here
+moment = Moment(app) # Initialize Flask-Moment here
 
 # --- Configuration ---
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'your_super_secret_and_long_random_key_here_replace_me_in_production')
