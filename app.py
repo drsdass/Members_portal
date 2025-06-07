@@ -6,8 +6,9 @@ import datetime
 import re # Not directly used in this app.py, but kept if other parts might need it.
 
 # Import blueprints
-from .auth import auth_bp
-from .reports import reports_bp
+from auth import auth_bp
+from models import get_all_reports, load_data, get_entities_for_user, get_available_report_types
+from reports import reports_bp
 
 # Initialize the Flask application
 app = Flask(__name__)
