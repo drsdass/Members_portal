@@ -1,10 +1,11 @@
-
 services:
   - type: web
     name: rep-portal
     env: python
-    buildCommand: ""
+    buildCommand: "pip install -r requirements.txt"
     startCommand: gunicorn app:app
     envVars:
       - key: FLASK_ENV
         value: production
+      - key: FLASK_SECRET_KEY
+        value: your_secure_random_key_here
