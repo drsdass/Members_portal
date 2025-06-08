@@ -360,7 +360,10 @@ def select_entity():
 @login_required
 def dashboard():
     username = session['username']
-    user_role = session['role']
+    user_role = session.get('role')
+    if not user_role:
+        flash('No role found. Please select one.')
+        return redirect(url_for('auth.select_role'))
     selected_entity = session.get('selected_entity', 'All Entities') # Default to 'All Entities'
 
     # Filter available report types based on the user's role
@@ -609,7 +612,10 @@ def dashboard():
 @login_required
 def select_report():
     username = session['username']
-    user_role = session['role']
+    user_role = session.get('role')
+    if not user_role:
+        flash('No role found. Please select one.')
+        return redirect(url_for('auth.select_role'))
     selected_entity = session.get('selected_entity')
 
     # Filter available report types based on the user's role
@@ -654,7 +660,10 @@ def select_report():
 @login_required
 def display_patient_reports(patient_id):
     username = session['username']
-    user_role = session['role']
+    user_role = session.get('role')
+    if not user_role:
+        flash('No role found. Please select one.')
+        return redirect(url_for('auth.select_role'))
     selected_entity = session.get('selected_entity') # Get selected entity from session
 
     patient_name = patient_id # Default to patient ID if name not found
