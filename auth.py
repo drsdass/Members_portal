@@ -61,6 +61,7 @@ def login():
                 return redirect(url_for('auth.select_role'))
 
             session['username'] = username
+        session['role'] = session.get('selected_role')
             session['selected_role'] = selected_role
             session['user_role'] = user_info['role'] # Store the actual role from user data
 
