@@ -1,4 +1,3 @@
-
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash, send_from_directory
 from functools import wraps
 import pandas as pd
@@ -452,3 +451,4 @@ def serve_dummy_files(filename):
         with open(os.path.join(dummy_files_dir, 'Patient_Report_IJ345_2025_05.pdf'), 'w') as f:
             f.write("Dummy PDF content for Patient Report IJ345 - May 2025")
     return send_from_directory(dummy_files_dir, filename)
+
