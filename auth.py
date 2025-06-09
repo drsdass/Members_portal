@@ -40,57 +40,13 @@ def role_required(allowed_roles):
         return decorated_function
     return decorator
 
-
-
-
 @auth_bp.route('/login', methods=['GET', 'POST'])
-@auth_bp.route('/login/<role>', methods=['GET', 'POST'])
-def login(role=None):
-    if role:
-        session['selected_role'] = role
+def login():
     selected_role = session.get('selected_role')
-    print(f"[DEBUG] selected_role from session: {selected_role}")
     if not selected_role:
         flash('Please select a role first.', 'error')
         return redirect(url_for('auth.select_role'))
 
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        print(f"[DEBUG] Login attempt: username={username}, password={'*' * len(password)}")
-
-        user = users.get(username)
-        if user:
-            print(f"[DEBUG] User found: {username}, role={user['role']}")
-        else:
-            print(f"[DEBUG] No such user: {username}")
-
-        if user and check_password_hash(user['password_hash'], password):
-            session['username'] = username
-            session['role'] = selected_role
-            flash(f"Welcome, {username} ({user['role']})", 'success')
-            print(f"[DEBUG] Login success: username={username}, role={selected_role}")
-            return redirect(url_for('dashboard'))
-
-        flash('Invalid username or password.', 'error')
-        print("[DEBUG] Login failed: invalid credentials")
-
-    return render_template('login.html', role=selected_role)
-
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-
-        user = users.get(username)
-        if user and check_password_hash(user['password_hash'], password):
-            session['username'] = username
-            session['role'] = selected_role
-            flash(f"Welcome, {username} ({user['role']})", 'success')
-            return redirect(url_for('dashboard'))
-
-        flash('Invalid username or password.', 'error')
-
-    return render_template('login.html', role=selected_role)
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
@@ -105,7 +61,6 @@ def login(role=None):
                 return redirect(url_for('auth.select_role'))
 
             session['username'] = username
-        session['role'] = session.get('selected_role')
             session['selected_role'] = selected_role
             session['user_role'] = user_info['role'] # Store the actual role from user data
 
