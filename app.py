@@ -121,6 +121,7 @@ YEARS = list(range(CURRENT_APP_YEAR - 2, CURRENT_APP_YEAR + 2)) # e.g., 2023, 20
 df = pd.DataFrame() # Initialize as empty to avoid error if file not found
 try:
     df = pd.read_csv('data.csv', parse_dates=['Date']) # Parse 'Date' column as datetime objects
+access_df = pd.read_csv('access.csv')
     print("data.csv loaded successfully.")
 except FileNotFoundError:
     print("Error: data.csv not found. Please ensure the file is in the same directory as app.py. Dummy data will be created.")
