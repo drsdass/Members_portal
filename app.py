@@ -116,6 +116,10 @@ MONTHS = [
 CURRENT_APP_YEAR = datetime.datetime.now().year
 YEARS = list(range(CURRENT_APP_YEAR - 2, CURRENT_APP_YEAR + 2)) # e.g., 2023, 2024, 2025, 2026
 
+# Load access.csv for user/entity permissions
+access_df = pd.read_csv('access.csv')
+if access_df.columns[0] != 'Username':
+    access_df.rename(columns={access_df.columns[0]: 'Username'}, inplace=True)
 
 # --- Data Loading (Optimized: Load once at app startup) ---
 df = pd.DataFrame() # Initialize as empty to avoid error if file not found
@@ -238,7 +242,6 @@ except FileNotFoundError:
         ]
     }
     df = pd.DataFrame(dummy_data)
-    access_df['Date'] = pd.to_datetime(access_df['Date']) # Ensure 'Date' column is datetime
     print("Dummy data created and loaded.")
     # Save dummy data to data.csv for future runs if needed
     df.to_csv('data.csv', index=False)
