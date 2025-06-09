@@ -614,7 +614,7 @@ def select_report():
     import pandas as pd
 access_df = pd.read_csv('access.csv')
 username = session['username']
-        user_role = session.get('role')
+    user_role = session.get('role')
     if not user_role:
         flash('No role found. Please select one.')
         return redirect(url_for('auth.select_role'))
