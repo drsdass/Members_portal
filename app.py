@@ -433,17 +433,17 @@ def dashboard():
             return redirect(url_for('unauthorized')) # Redirect to unauthorized page
 
         # Filter data for the logged-in user and selected month/year
-        filtered_df = access_df[
-            (access_df['Username'] == username) & 
-            (access_df['Date'].dt.month == int(month)) & 
-            (access_df['Date'].dt.year == int(year))
+        filtered_df = df[
+            (df['Username'] == username) &
+            (df['Date'].dt.month == int(month)) &
+            (df['Date'].dt.year == int(year))
         ]
         
         # Calculate totals for the bonus report
-        total_reimbursement = filtered_access_df['Reimbursement'].sum()
-        total_cogs = filtered_access_df['COGS'].sum()
-        total_net = filtered_access_df['Net'].sum()
-        total_commission = filtered_access_df['Commission'].sum()
+        total_reimbursement = filtered_df['Reimbursement'].sum()
+        total_cogs = filtered_df['COGS'].sum()
+        total_net = filtered_df['Net'].sum()
+        total_commission = filtered_df['Commission'].sum()
         
         # Convert to a list of dictionaries for rendering in HTML
         # Also, include the totals
@@ -480,10 +480,10 @@ def dashboard():
                                    available_report_types=available_report_types,
                                    message=message)
 
-        filtered_df = access_df[
-            (access_df['Entity'] == selected_entity) &
-            (access_df['Date'].dt.month == int(month)) &
-            (access_df['Date'].dt.year == int(year))
+        filtered_df = df[
+            (df['Entity'] == selected_entity) &
+            (df['Date'].dt.month == int(month)) &
+            (df['Date'].dt.year == int(year))
         ]
         
         # For requisitions, we might just want to display the raw data or a summarized version
@@ -547,9 +547,9 @@ def dashboard():
                 return redirect(url_for('dashboard'))
 
             # Filter for the patient's own records
-            filtered_df = access_df[
-                (access_df['PatientID'] == patient_id) &
-                (access_df['Associated Rep Name'].str.contains(patient_last_name, case=False, na=False)) # Assuming last name is in 'Associated Rep Name' for simplicity
+            filtered_df = df[
+                (df['PatientID'] == patient_id) &
+                (df['Associated Rep Name'].str.contains(patient_last_name, case=False, na=False)) # Assuming last name is in 'Associated Rep Name' for simplicity
                 # In a real system, you'd use a more robust patient matching
             ]
 
@@ -571,7 +571,7 @@ def dashboard():
                                        selected_entity=selected_entity)
             
             # Filter based on patient_id and selected_entity (if not 'All Entities')
-            filtered_df = access_df[access_df['PatientID'] == patient_id]
+            filtered_df = df[df['PatientID'] == patient_id]
 
             if selected_entity != 'All Entities':
                 # Admins or Physicians can only see patient reports for entities they manage
@@ -580,7 +580,7 @@ def dashboard():
                     flash('You are not authorized to view patient reports for this entity.', 'error')
                     return redirect(url_for('unauthorized'))
                 
-                filtered_df = filtered_access_df[filtered_access_df['Entity'] == selected_entity]
+                filtered_df = filtered_df[filtered_df['Entity'] == selected_entity]
 
             if not filtered_df.empty:
                 # Redirect to a dedicated page for displaying patient reports
@@ -705,13 +705,13 @@ def display_patient_reports(patient_id):
         user_details = users.get(username, {}).get('patient_details', {})
         if user_details and user_details.get('patient_id') == patient_id:
             # This is the patient viewing their own reports
-            filtered_df = access_df[access_df['PatientID'] == patient_id]
+            filtered_df = df[df['PatientID'] == patient_id]
             patient_name = user_details.get('last_name', patient_id) # Use last name for display
         else:
             flash("You are not authorized to view this patient's reports.", 'error')
             return redirect(url_for('unauthorized'))
     else: # admin or physician_provider role
-        filtered_df = access_df[access_df['PatientID'] == patient_id]
+        filtered_df = df[df['PatientID'] == patient_id]
         
         if selected_entity != 'All Entities':
             # Admins/Physicians can only see patient reports for entities they manage
@@ -719,11 +719,11 @@ def display_patient_reports(patient_id):
             if selected_entity not in user_allowed_entities:
                 flash('You are not authorized to view patient reports for this entity.', 'error')
                 return redirect(url_for('unauthorized'))
-            filtered_df = filtered_access_df[filtered_access_df['Entity'] == selected_entity]
+            filtered_df = filtered_df[filtered_df['Entity'] == selected_entity]
 
         # Try to get patient's last name from the filtered data if available
         if not filtered_df.empty:
-            patient_name = filtered_access_df['Associated Rep Name'].iloc[0] # Assuming rep name might contain patient's last name
+            patient_name = filtered_df['Associated Rep Name'].iloc[0] # Assuming rep name might contain patient's last name
             # Or retrieve from a dedicated patient_details structure if available
             # For simplicity, if 'Associated Rep Name' is 'Dr. Smith' or 'Dr. Jones', we don't want to use that.
             # We would need a proper patient database for robust patient name lookup.
@@ -734,7 +734,7 @@ def display_patient_reports(patient_id):
     if not filtered_df.empty:
         # Group by Date of Service (DOS)
         results_by_dos = {}
-        for dos, group in filtered_df.groupby(filtered_access_df['Date'].dt.date):
+        for dos, group in filtered_df.groupby(filtered_df['Date'].dt.date):
             reports_for_dos = []
             # In a real application, each row might correspond to a specific report file
             # For this demo, we'll create dummy report names/links
