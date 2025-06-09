@@ -1,83 +1,37 @@
 
 body {
     font-family: Arial, sans-serif;
-    background-color: #f5f7fa;
-    margin: 0;
-    padding: 0;
-    animation: fadeIn 1s ease-in;
+    background-color: #f8f9fa;
+    margin: 0; padding: 0;
 }
-
-.container {
-    max-width: 900px;
-    margin: 30px auto;
-    background-color: white;
-    padding: 20px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    border-radius: 8px;
-    animation: slideUp 0.7s ease-in-out;
+.container, .login-box, .dashboard, .role-selection, .report-page {
+    width: 90%;
+    max-width: 500px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
 }
-
-h1, h2, h3 {
-    color: #2c3e50;
+input, select, button {
+    width: 100%;
+    margin: 10px 0;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
 }
-
-.navbar {
-    background-color: #34495e;
-    padding: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-}
-
-.navbar a {
+button {
+    background-color: #007bff;
     color: white;
-    text-decoration: none;
-    margin: 5px 10px;
-}
-
-.button {
-    background-color: #2980b9;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    border: none;
+    transition: background-color 0.3s ease;
 }
-
-.button:hover {
-    background-color: #3498db;
+button:hover {
+    background-color: #0056b3;
 }
-
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideUp {
-    from { transform: translateY(30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .container {
-        margin: 10px;
-        padding: 15px;
-    }
-
-    .navbar {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .navbar a {
-        margin: 5px 0;
-    }
-
-    .button {
-        width: 100%;
-        text-align: center;
-    }
+nav a {
+    margin-right: 20px;
+    text-decoration: none;
+    color: #007bff;
 }
