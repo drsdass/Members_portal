@@ -611,12 +611,20 @@ def dashboard():
 @app.route('/select_report', methods=['GET', 'POST'])
 @login_required
 def select_report():
-    username = session['username']
+    import pandas as pd
+    access_df = pd.read_csv('access.csv')    username = session['username']
     user_role = session.get('role')
     if not user_role:
         flash('No role found. Please select one.')
         return redirect(url_for('auth.select_role'))
     selected_entity = session.get('selected_entity')
+    # Filter allowed entities for this user from access.csv
+    user_row = access_df[access_df['Admin'] == username]
+    entities = []
+    if not user_row.empty:
+        row_data = user_row.iloc[0].to_dict()
+        entities = [key for key, val in row_data.items() if val.strip().lower() == 'yes' and key != 'Admin']
+
 
     # Filter available report types based on the user's role
     available_report_types = REPORT_TYPES_BY_ROLE.get(user_role, [])
@@ -664,7 +672,14 @@ def display_patient_reports(patient_id):
     if not user_role:
         flash('No role found. Please select one.')
         return redirect(url_for('auth.select_role'))
-    selected_entity = session.get('selected_entity') # Get selected entity from session
+    selected_entity = session.get('selected_entity')
+    # Filter allowed entities for this user from access.csv
+    user_row = access_df[access_df['Admin'] == username]
+    entities = []
+    if not user_row.empty:
+        row_data = user_row.iloc[0].to_dict()
+        entities = [key for key, val in row_data.items() if val.strip().lower() == 'yes' and key != 'Admin']
+ # Get selected entity from session
 
     patient_name = patient_id # Default to patient ID if name not found
     
