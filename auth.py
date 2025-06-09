@@ -42,8 +42,12 @@ def role_required(allowed_roles):
 
 
 
+
 @auth_bp.route('/login', methods=['GET', 'POST'])
-def login():
+@auth_bp.route('/login/<role>', methods=['GET', 'POST'])
+def login(role=None):
+    if role:
+        session['selected_role'] = role
     selected_role = session.get('selected_role')
     print(f"[DEBUG] selected_role from session: {selected_role}")
     if not selected_role:
@@ -72,6 +76,7 @@ def login():
         print("[DEBUG] Login failed: invalid credentials")
 
     return render_template('login.html', role=selected_role)
+
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
