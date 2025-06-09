@@ -47,7 +47,7 @@
                     <p class="bg-red-700 text-white px-4 py-3 rounded-md mb-6 text-center">{{ error }}</p>
                 {% endif %}
 
-                <form action="{{ url_for('login') }}" method="post" class="space-y-6">
+                <form action="{{ url_for('login', role=selected_role) }}" method="post" class="space-y-6">
                     {% if selected_role == 'patient' %}
                         <div>
                             <label for="last_name" class="block text-sm font-medium text-gray-300 mb-1">Last Name</label>
