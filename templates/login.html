@@ -1,11 +1,17 @@
 <!DOCTYPE html>
-<html>
-<head><title>Login</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - {{ role|capitalize }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
 <body>
-  <h2>Login - {{ role }}</h2>
-  <form method="post">
-    Username: <input type="text" name="username" required><br>
-    <input type="submit" value="Login">
-  </form>
+    <div class="container login-box">
+        <h2>{{ role|capitalize }} Login</h2>
+        <form method="post">
+            <input type="text" name="username" placeholder="Enter your username" required>
+            <button type="submit">Login</button>
+        </form>
+    </div>
 </body>
 </html>

@@ -1,8 +1,17 @@
 <!DOCTYPE html>
-<html>
-<head><title>Dashboard</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
 <body>
-  <h1>Welcome, {{ username }} ({{ role }})</h1>
-  <a href="{{ url_for('select_report') }}">Select Report</a> | <a href="{{ url_for('logout') }}">Logout</a>
+    <div class="dashboard">
+        <h1>Welcome, {{ username }} ({{ role }})</h1>
+        <nav>
+            <a href="{{ url_for('select_report') }}">Select Report</a>
+            <a href="{{ url_for('logout') }}">Logout</a>
+        </nav>
+    </div>
 </body>
 </html>

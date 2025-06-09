@@ -1,40 +1,46 @@
 <!DOCTYPE html>
-<html>
-<head><title>Select Report</title></head>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Select Report</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
 <body>
-  <h1>Report Portal</h1>
-  <p>Welcome, {{ username }} ({{ role }})</p>
-  <form method="get" action="/select_report">
-    <label>Entity:</label>
-    <select name="entity">
-      {% for entity in user_authorized_entities %}
-      <option value="{{ entity }}">{{ entity }}</option>
-      {% endfor %}
-    </select><br>
+    <div class="report-page">
+        <h1>Report Portal</h1>
+        <p>Welcome, {{ username }} ({{ role }})</p>
+        <form method="get" action="/select_report">
+            <label>Entity:</label>
+            <select name="entity">
+                {% for entity in user_authorized_entities %}
+                <option value="{{ entity }}">{{ entity }}</option>
+                {% endfor %}
+            </select><br>
 
-    <label>Report Type:</label>
-    <select name="report_type">
-      {% for rt in available_report_types %}
-      <option value="{{ rt.value }}">{{ rt.name }}</option>
-      {% endfor %}
-    </select><br>
+            <label>Report Type:</label>
+            <select name="report_type">
+                {% for rt in available_report_types %}
+                <option value="{{ rt.value }}">{{ rt.name }}</option>
+                {% endfor %}
+            </select><br>
 
-    <label>Month:</label>
-    <select name="month">
-      {% for m in months %}
-      <option value="{{ m.value }}">{{ m.name }}</option>
-      {% endfor %}
-    </select><br>
+            <label>Month:</label>
+            <select name="month">
+                {% for m in months %}
+                <option value="{{ m.value }}">{{ m.name }}</option>
+                {% endfor %}
+            </select><br>
 
-    <label>Year:</label>
-    <select name="year">
-      {% for y in years %}
-      <option value="{{ y }}">{{ y }}</option>
-      {% endfor %}
-    </select><br>
+            <label>Year:</label>
+            <select name="year">
+                {% for y in years %}
+                <option value="{{ y }}">{{ y }}</option>
+                {% endfor %}
+            </select><br>
 
-    <input type="submit" value="View Report">
-  </form>
-  <a href="{{ url_for('logout') }}">Logout</a>
+            <button type="submit">View Report</button>
+        </form>
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
 </body>
 </html>
