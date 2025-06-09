@@ -1,140 +1,40 @@
-{% extends "base_dashboard.html" %}
+<!DOCTYPE html>
+<html>
+<head><title>Select Report</title></head>
+<body>
+  <h1>Report Portal</h1>
+  <p>Welcome, {{ username }} ({{ role }})</p>
+  <form method="get" action="/select_report">
+    <label>Entity:</label>
+    <select name="entity">
+      {% for entity in user_authorized_entities %}
+      <option value="{{ entity }}">{{ entity }}</option>
+      {% endfor %}
+    </select><br>
 
-{% block title %}Select Report &amp; Entity{% endblock %}
+    <label>Report Type:</label>
+    <select name="report_type">
+      {% for rt in available_report_types %}
+      <option value="{{ rt.value }}">{{ rt.name }}</option>
+      {% endfor %}
+    </select><br>
 
-{% block head %}
-    {{ super() }}
-    <script src="https://cdn.tailwindcss.com"></script>
-<style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        /* Custom styling for the main content card */
-        .content-card {
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 5px 15px rgba(0, 0, 0, 0.05); /* Deeper shadow */
-            transition: transform 0.3s ease-in-out;
-        }
-        .content-card:hover {
-            transform: translateY(-3px); /* Subtle lift on hover */
-        }
-        /* Custom styling for select elements */
-        .custom-select {
-            appearance: none; /* Remove default arrow */
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 0.75rem center;
-            background-size: 1.5em 1.5em;
-            padding-right: 2.5rem;
-            cursor: pointer;
-        }
-        .custom-select:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5); /* Focus ring */
-            border-color: #3B82F6; /* Blue border on focus */
-        }
-    </style>
-{% endblock %}
+    <label>Month:</label>
+    <select name="month">
+      {% for m in months %}
+      <option value="{{ m.value }}">{{ m.name }}</option>
+      {% endfor %}
+    </select><br>
 
-{% block content %}
-<div class="container mx-auto p-6 lg:p-8">
-<div class="bg-white p-8 rounded-xl content-card max-w-4xl mx-auto">
-<h1 class="text-4xl font-extrabold text-gray-900 mb-4">Select Report &amp; Entity</h1>
+    <label>Year:</label>
+    <select name="year">
+      {% for y in years %}
+      <option value="{{ y }}">{{ y }}</option>
+      {% endfor %}
+    </select><br>
 
-        {% if current_username %} {# Changed from current_user.is_authenticated #}
-        <p class="text-xl text-gray-700 mb-6">Welcome, <span class="font-semibold text-blue-600">{{ current_username }}</span>!</p> {# Changed from current_user.username #}
-        {% endif %}
-
-        {# Flash Messages Display #}
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="mb-6 space-y-3">
-                    {% for category, message in messages %}
-                        <div class="p-4 rounded-lg text-lg {% if category == 'error' %} bg-red-100 text-red-800 border border-red-200 {% elif category == 'success' %} bg-green-100 text-green-800 border border-green-200 {% else %} bg-blue-100 text-blue-800 border border-blue-200 {% endif %}" role="alert">
-                            {{ message }}
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-
-        <form action="{{ url_for('select_report') }}" class="space-y-8" method="post">
-<div>
-<label class="block text-xl font-semibold text-gray-700 mb-3" for="entity_select">Choose an Entity:</label>
-
-</div>
-<div>
-<label class="block text-xl font-semibold text-gray-700 mb-3" for="report_type_select">Choose a Report Type:</label>
-
-</div>
-
-            {# Month and Year Selection Block (for Monthly Bonus Report) #}
-            <div class="space-y-4" id="month_year_selection">
-<label class="block text-xl font-semibold text-gray-700 mb-3">Select Month and Year (for Monthly Bonus Report):</label>
-<div class="flex flex-wrap gap-4"> {# Use flex-wrap for responsiveness #}
-                    <div class="flex-1 min-w-[150px]"> {# Added min-width for responsiveness #}
-                        <label class="block text-sm font-medium text-gray-700 sr-only" for="month">Month:</label>
-
-</div>
-<div class="flex-1 min-w-[150px]"> {# Added min-width for responsiveness #}
-                        <label class="block text-sm font-medium text-gray-700 sr-only" for="year">Year:</label>
-
-</div>
-</div>
-</div>
-<div class="pt-4">
-<button class="w-full md:w-auto inline-flex justify-center items-center px-8 py-3 border border-transparent rounded-lg shadow-md text-xl font-semibold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-200 ease-in-out transform hover:scale-105" type="submit">
-<svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-                    View Report
-                </button>
-</div>
-
-<select class="custom-select mt-1 block w-full px-4 py-3 text-lg border border-gray-300 rounded-lg shadow-sm" id="entity_select" name="entity" required="">
-<option value="">-- Select Entity --</option>
-  {% for entity in user_authorized_entities %}
-    <option %}="" %}selected{%="" endif="" entity="selected_entity" if="" value="{{ entity }}" {%="">{{ entity }}</option>
-  {% endfor %}
-</select>
-<select class="custom-select mt-1 block w-full px-4 py-3 text-lg border border-gray-300 rounded-lg shadow-sm" id="report_type_select" name="report_type" required="">
-<option value="">-- Select Report Type --</option>
-  {% for report_type_option in available_report_types %}
-    <option %}="" %}selected{%="" endif="" if="" report_type_option.value="selected_report_type" value="{{ report_type_option.value }}" {%="">{{ report_type_option.name }}</option>
-  {% endfor %}
-</select>
-<select class="custom-select mt-1 block w-full px-4 py-3 text-lg border border-gray-300 rounded-lg shadow-sm" id="month" name="month">
-<option value="">-- Select Month --</option>
-  {% for month_option in months %}
-    <option %}="" %}selected{%="" endif="" if="" month_option.value="selected_month" value="{{ month_option.value }}" {%="">{{ month_option.name }}</option>
-  {% endfor %}
-</select>
-<select class="custom-select mt-1 block w-full px-4 py-3 text-lg border border-gray-300 rounded-lg shadow-sm" id="year" name="year">
-<option value="">-- Select Year --</option>
-  {% for year_option in years %}
-    <option %}="" %}selected{%="" endif="" if="" value="{{ year_option }}" year_option="selected_year" {%="">{{ year_option }}</option>
-  {% endfor %}
-</select>
-</form>
-</div>
-</div>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const reportTypeSelect = document.getElementById('report_type_select'); {# Corrected ID #}
-        const monthYearSelection = document.getElementById('month_year_selection');
-
-        function toggleMonthYear() {
-            // Only show month/year for monthly_bonus report
-            if (reportTypeSelect.value === 'monthly_bonus') {
-                monthYearSelection.style.display = 'block';
-            } else {
-                monthYearSelection.style.display = 'none';
-            }
-        }
-
-        // Initial state
-        toggleMonthYear();
-
-        // Add event listener for changes
-        reportTypeSelect.addEventListener('change', toggleMonthYear);
-    });
-</script>
-{% endblock %}
+    <input type="submit" value="View Report">
+  </form>
+  <a href="{{ url_for('logout') }}">Logout</a>
+</body>
+</html>
