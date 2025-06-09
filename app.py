@@ -299,9 +299,9 @@ def login(role):
                 if remember_me:
                     session.permanent = True
                     app.permanent_session_lifetime = datetime.timedelta(days=30) # Remember for 30 days
-
+                
                 flash(f'Welcome, {username}! You have successfully logged in as {role.replace("_", " ").title()}.', 'success')
-
+                
                 # Admins and Business Dev Managers with full entity access can go directly to dashboard
                 if role in ['admin', 'business_dev_manager'] and user_data['entities'] == MASTER_ENTITIES:
                     # For admins and business dev managers, automatically select all entities if they have full access
@@ -317,7 +317,7 @@ def login(role):
                         session['selected_entity'] = user_data['entities'][0]
                     else:
                         # For patients or roles without associated entities, set a placeholder or handle as needed
-                        session['selected_entity'] = 'N/A'
+                        session['selected_entity'] = 'N/A' 
                     return redirect(url_for('dashboard'))
             else:
                 flash(f'Your account is not registered under the {role.replace("_", " ").title()} role. Please select the correct role.', 'error')
@@ -352,7 +352,7 @@ def select_entity():
             return redirect(url_for('dashboard'))
         else:
             error = 'Please select a valid entity.'
-
+            
     return render_template('select_entity.html', available_entities=user_entities, error=error)
 
 # --- Dashboard and Report Views ---
@@ -368,7 +368,7 @@ def dashboard():
 
     # Filter available report types based on the user's role
     available_report_types = REPORT_TYPES_BY_ROLE.get(user_role, [])
-
+    
     # Prepare data for dashboard view
     display_data = []
     report_type = session.get('report_type')
@@ -378,12 +378,12 @@ def dashboard():
     if report_type == 'financials':
         if selected_entity == 'All Entities':
             message = "Please select a specific entity to view financial reports."
-            return render_template('dashboard.html',
-                                   current_username=username,
-                                   user_role=user_role,
+            return render_template('dashboard.html', 
+                                   current_username=username, 
+                                   user_role=user_role, 
                                    available_report_types=available_report_types,
                                    message=message)
-
+        
         # Determine the correct financial report filename based on selected entity, month, year
         # This is a placeholder for actual file fetching logic
         financial_reports_info = []
@@ -394,34 +394,34 @@ def dashboard():
 
             filename = f"{selected_entity}{report_def['file_suffix']}.pdf"
             display_name = f"{selected_entity} {report_def['display_name_part']} ({report_def['basis']}) - {month}/{year}"
-
+            
             # Placeholder for actual file existence check
             # In a real application, you would check if the file exists in your storage (e.g., S3, Google Drive)
             file_exists = True # Assume file exists for demonstration
-
+            
             if file_exists:
                 financial_reports_info.append({
                     'name': display_name,
                     'filename': filename,
                     # This would be a link to download or view the PDF,
                     # e.g., url_for('download_report', filename=filename, entity=selected_entity)
-                    'webViewLink': url_for('download_report', report_type='financials', entity=selected_entity,
+                    'webViewLink': url_for('download_report', report_type='financials', entity=selected_entity, 
                                            display_name_part=report_def['display_name_part'], basis=report_def['basis'],
                                            month=month, year=year)
                 })
-
+        
         if not financial_reports_info:
             message = "No financial reports available for the selected entity and period."
-            return render_template('dashboard.html',
-                                   current_username=username,
-                                   user_role=user_role,
+            return render_template('dashboard.html', 
+                                   current_username=username, 
+                                   user_role=user_role, 
                                    available_report_types=available_report_types,
                                    selected_entity=selected_entity,
                                    message=message)
-
-        return render_template('dashboard.html',
-                               current_username=username,
-                               user_role=user_role,
+        
+        return render_template('dashboard.html', 
+                               current_username=username, 
+                               user_role=user_role, 
                                available_report_types=available_report_types,
                                selected_entity=selected_entity,
                                financial_reports=financial_reports_info)
@@ -434,17 +434,17 @@ def dashboard():
 
         # Filter data for the logged-in user and selected month/year
         filtered_df = df[
-            (df['Username'] == username) &
-            (df['Date'].dt.month == int(month)) &
+            (df['Username'] == username) & 
+            (df['Date'].dt.month == int(month)) & 
             (df['Date'].dt.year == int(year))
         ]
-
+        
         # Calculate totals for the bonus report
         total_reimbursement = filtered_df['Reimbursement'].sum()
         total_cogs = filtered_df['COGS'].sum()
         total_net = filtered_df['Net'].sum()
         total_commission = filtered_df['Commission'].sum()
-
+        
         # Convert to a list of dictionaries for rendering in HTML
         # Also, include the totals
         if not filtered_df.empty:
@@ -459,10 +459,10 @@ def dashboard():
                 'Entity': '', 'Associated Rep Name': '', 'Username': '', 'PatientID': '' # Empty for totals row
             }
             display_data.append(totals_summary) # Add totals to the end of the data
-
-        return render_template('monthly_bonus.html',
-                               current_username=username,
-                               user_role=user_role,
+        
+        return render_template('monthly_bonus.html', 
+                               current_username=username, 
+                               user_role=user_role, 
                                available_report_types=available_report_types,
                                selected_entity=selected_entity,
                                month=month,
@@ -474,9 +474,9 @@ def dashboard():
         # Filter for the selected entity and month/year
         if selected_entity == 'All Entities':
             message = "Please select a specific entity to view requisitions."
-            return render_template('dashboard.html',
-                                   current_username=username,
-                                   user_role=user_role,
+            return render_template('dashboard.html', 
+                                   current_username=username, 
+                                   user_role=user_role, 
                                    available_report_types=available_report_types,
                                    message=message)
 
@@ -485,11 +485,11 @@ def dashboard():
             (df['Date'].dt.month == int(month)) &
             (df['Date'].dt.year == int(year))
         ]
-
+        
         # For requisitions, we might just want to display the raw data or a summarized version
         display_data = filtered_df.to_dict(orient='records') if not filtered_df.empty else []
-
-        return render_template('generic_report.html',
+        
+        return render_template('generic_report.html', 
                                report_title=f"Requisitions for {selected_entity} - {month}/{year}",
                                message=f"Displaying {len(display_data)} requisitions.",
                                report_data=display_data,
@@ -509,24 +509,24 @@ def dashboard():
             for material_def in MARKETING_REPORT_DEFINITIONS:
                 filename = f"{entity}{material_def['file_suffix']}.pdf"
                 display_name = f"{entity} {material_def['display_name_part']}"
-
+                
                 # Simulate file existence check
                 file_exists = True # Assume files exist for all entities and types for demo
-
+                
                 if file_exists:
                     entity_files.append({
                         'name': display_name,
                         'filename': filename,
                         # This would be a link to view/download the material
-                        'webViewLink': url_for('download_report', report_type='marketing_material', entity=entity,
+                        'webViewLink': url_for('download_report', report_type='marketing_material', entity=entity, 
                                                display_name_part=material_def['display_name_part'])
                     })
             if entity_files:
                 files_by_entity[entity] = entity_files
-
-        return render_template('dashboard.html',
-                               current_username=username,
-                               user_role=user_role,
+        
+        return render_template('dashboard.html', 
+                               current_username=username, 
+                               user_role=user_role, 
                                available_report_types=available_report_types,
                                selected_entity=selected_entity,
                                files=files_by_entity) # Pass grouped files
@@ -540,7 +540,7 @@ def dashboard():
             patient_last_name = user_details.get('last_name')
             patient_dob = user_details.get('dob')
             patient_ssn4 = user_details.get('ssn4')
-
+            
             # If patient details are not fully configured, redirect or show error
             if not all([patient_id, patient_last_name, patient_dob, patient_ssn4]):
                 flash("Your patient profile is incomplete. Please contact support.", 'error')
@@ -556,20 +556,20 @@ def dashboard():
             if not filtered_df.empty:
                 return redirect(url_for('display_patient_reports', patient_id=patient_id))
             else:
-                return render_template('patient_results.html',
-                                       patient_name=patient_last_name,
+                return render_template('patient_results.html', 
+                                       patient_name=patient_last_name, 
                                        message="No patient reports found for your profile.",
                                        show_table=False)
 
         elif user_role in ['physician_provider', 'admin']:
             if not patient_id:
                 flash('Please enter a Patient ID to search for patient reports.', 'info')
-                return render_template('dashboard.html',
-                                       current_username=username,
-                                       user_role=user_role,
+                return render_template('dashboard.html', 
+                                       current_username=username, 
+                                       user_role=user_role, 
                                        available_report_types=available_report_types,
                                        selected_entity=selected_entity)
-
+            
             # Filter based on patient_id and selected_entity (if not 'All Entities')
             filtered_df = df[df['PatientID'] == patient_id]
 
@@ -579,7 +579,7 @@ def dashboard():
                 if selected_entity not in user_allowed_entities:
                     flash('You are not authorized to view patient reports for this entity.', 'error')
                     return redirect(url_for('unauthorized'))
-
+                
                 filtered_df = filtered_df[filtered_df['Entity'] == selected_entity]
 
             if not filtered_df.empty:
@@ -589,8 +589,8 @@ def dashboard():
                 message = f"No patient reports found for Patient ID: {patient_id} in {selected_entity}."
                 if selected_entity == 'All Entities':
                     message = f"No patient reports found for Patient ID: {patient_id} across all entities."
-
-                return render_template('patient_results.html',
+                
+                return render_template('patient_results.html', 
                                        patient_name=patient_id, # Display patient ID if name not available
                                        message=message,
                                        show_table=False)
@@ -598,9 +598,9 @@ def dashboard():
             flash("Patient reports are not available for your role.", 'error')
             return redirect(url_for('dashboard'))
 
-    return render_template('dashboard.html',
-                           current_username=username,
-                           user_role=user_role,
+    return render_template('dashboard.html', 
+                           current_username=username, 
+                           user_role=user_role, 
                            available_report_types=available_report_types,
                            selected_entity=selected_entity,
                            months=MONTHS,
@@ -640,7 +640,7 @@ username = session['username']
         session['report_type'] = report_type
         session['month'] = month
         session['year'] = year
-
+        
         # Handle specific redirects based on report type
         if report_type == 'patient_reports':
             # For patient reports, we always pass the patient_id (even if empty for admins/physicians initially)
@@ -655,7 +655,7 @@ username = session['username']
     current_month = datetime.datetime.now().month
     current_year = datetime.datetime.now().year
 
-    return render_template('select_report.html',
+    return render_template('select_report.html', 
                            available_report_types=available_report_types,
                            months=MONTHS,
                            years=YEARS,
@@ -683,7 +683,7 @@ def display_patient_reports(patient_id):
  # Get selected entity from session
 
     patient_name = patient_id # Default to patient ID if name not found
-
+    
     # Logic for patient role vs. admin/physician role
     if user_role == 'patient':
         user_details = users.get(username, {}).get('patient_details', {})
@@ -696,7 +696,7 @@ def display_patient_reports(patient_id):
             return redirect(url_for('unauthorized'))
     else: # admin or physician_provider role
         filtered_df = df[df['PatientID'] == patient_id]
-
+        
         if selected_entity != 'All Entities':
             # Admins/Physicians can only see patient reports for entities they manage
             user_allowed_entities = users[username]['entities']
@@ -714,7 +714,7 @@ def display_patient_reports(patient_id):
             # For now, let's just use the patient_id if it's not a physician's name.
             if patient_name.startswith('Dr.'):
                 patient_name = patient_id
-
+        
     if not filtered_df.empty:
         # Group by Date of Service (DOS)
         results_by_dos = {}
@@ -728,9 +728,9 @@ def display_patient_reports(patient_id):
                 report_link = url_for('download_report', report_type='patient_specific', patient_id=patient_id, date=dos.strftime('%Y-%m-%d'))
                 reports_for_dos.append({'name': report_name, 'webViewLink': report_link})
             results_by_dos[dos.strftime('%Y-%m-%d')] = reports_for_dos
-
-        return render_template('patient_results.html',
-                               patient_name=patient_name,
+        
+        return render_template('patient_results.html', 
+                               patient_name=patient_name, 
                                results_by_dos=results_by_dos,
                                message=f"Found {len(filtered_df)} records for {patient_name}." if user_role != 'patient' else None,
                                show_table=True)
@@ -738,8 +738,8 @@ def display_patient_reports(patient_id):
         message = f"No patient reports found for Patient ID: {patient_id}."
         if selected_entity != 'All Entities':
             message += f" within entity: {selected_entity}."
-        return render_template('patient_results.html',
-                               patient_name=patient_name,
+        return render_template('patient_results.html', 
+                               patient_name=patient_name, 
                                message=message,
                                show_table=False)
 
@@ -757,10 +757,10 @@ def download_report(report_type, entity, display_name_part, basis=None, month=No
 
     # For demonstration, we'll serve a dummy PDF.
     # Ensure a 'reports' directory exists in your static folder for this to work.
-
+    
     # Construct a dummy filename for demonstration purposes
     filename_to_serve = "dummy_report.pdf"
-
+    
     if report_type == 'financials':
         matching_def = next((item for item in FINANCIAL_REPORT_DEFINITIONS if item['display_name_part'] == display_name_part and item.get('basis', '') == (basis or '')), None)
         if matching_def:
@@ -769,7 +769,7 @@ def download_report(report_type, entity, display_name_part, basis=None, month=No
             # This is a simplification; real financial reports would likely be named with month/year
             # For demo, just use a generic dummy name or a specific one if available
             filename_to_serve = f"{actual_filename_prefix}.pdf" if "YTD" not in display_name_part else "dummy_ytd_report.pdf" # Example for YTD
-
+        
     elif report_type == 'marketing_material':
         matching_def = next((item for item in MARKETING_REPORT_DEFINITIONS if item['display_name_part'] == display_name_part), None)
         if matching_def:
@@ -793,7 +793,7 @@ def download_report(report_type, entity, display_name_part, basis=None, month=No
             with open(dummy_pdf_path, 'wb') as f:
                 f.write(b'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Contents 4 0 R/Parent 2 0 R>>endobj 4 0 obj<</Length 55>>stream\nBT /F1 24 Tf 100 700 Td (This is a dummy PDF report.) Tj ET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000055 00000 n\n0000000104 00000 n\n0000000192 00000 n\ntrailer<</Size 5/Root 1 0 R>>startxref\n296\n%%EOF')
             print(f"Created dummy PDF: {dummy_pdf_path}")
-
+            
         return send_from_directory(reports_dir, filename_to_serve, as_attachment=False) # as_attachment=False to display in browser
     except Exception as e:
         flash(f"Error serving report: {e}", 'error')
