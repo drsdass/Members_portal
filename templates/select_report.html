@@ -1,44 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
     <title>Select Report</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="report-page">
-        <h1>Report Portal</h1>
-        <p>Welcome, {{ username }} ({{ role }})</p>
+    <div class="report-form">
+        <h2>Report Portal</h2>
         <form method="get" action="/select_report">
-            <label>Entity:</label>
-            <select name="entity">
-                {% for entity in user_authorized_entities %}
-                <option value="{{ entity }}">{{ entity }}</option>
-                {% endfor %}
-            </select><br>
-
             <label>Report Type:</label>
             <select name="report_type">
-                {% for rt in available_report_types %}
-                <option value="{{ rt.value }}">{{ rt.name }}</option>
-                {% endfor %}
-            </select><br>
-
+                <option value="monthly_bonus">Monthly Bonus</option>
+                <option value="requisitions">Requisitions</option>
+                <option value="marketing_material">Marketing Material</option>
+                <option value="financials">Financials</option>
+            </select>
+            <br>
+            <label>Entity:</label>
+            <input type="text" name="entity" placeholder="e.g. First Bio Lab" />
+            <br>
             <label>Month:</label>
-            <select name="month">
-                {% for m in months %}
-                <option value="{{ m.value }}">{{ m.name }}</option>
-                {% endfor %}
-            </select><br>
-
+            <input type="text" name="month" placeholder="e.g. January" />
+            <br>
             <label>Year:</label>
-            <select name="year">
-                {% for y in years %}
-                <option value="{{ y }}">{{ y }}</option>
-                {% endfor %}
-            </select><br>
-
-            <button type="submit">View Report</button>
+            <input type="text" name="year" placeholder="e.g. 2024" />
+            <br>
+            <button type="submit">Submit</button>
         </form>
         <a href="{{ url_for('logout') }}">Logout</a>
     </div>
