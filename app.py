@@ -7,10 +7,11 @@ import datetime
 import re
 from functools import wraps
 
-# Import blueprints
-from .auth import auth_bp
-from .reports import reports_bp
-from . import models # Import models to access centralized data like users and MASTER_ENTITIES
+# Import blueprints using absolute imports for a flat project structure
+# When app.py is at the root and not itself part of a package, use direct module names
+from auth import auth_bp
+from reports import reports_bp
+import models # Import models to access centralized data like users and MASTER_ENTITIES
 
 # Initialize the Flask application
 app = Flask(__name__)
@@ -199,4 +200,3 @@ def health_check():
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-
