@@ -3,8 +3,10 @@ from functools import wraps
 import pandas as pd
 import datetime
 import re
-from . import models # Import models from the same package
-from .auth import login_required, role_required # Import decorators from auth blueprint
+import os # Ensure os is imported for path operations
+
+import models # Changed: Import models using absolute import (from . import models removed)
+from auth import login_required, role_required # Changed: Import decorators using absolute import
 
 reports_bp = Blueprint('reports', __name__)
 
@@ -41,12 +43,13 @@ def dashboard():
     available_report_types = models.get_report_types_for_role(user_role)
 
     # Get the selected entity, month, and year from session or request
-    selected_entity = session.get('selected_entity')
+    selected_entity = request.args.get('entity', session.get('selected_entity'))
     selected_month = request.args.get('month', session.get('selected_month'))
     selected_year = request.args.get('year', session.get('selected_year'))
     report_type = request.args.get('report_type', session.get('report_type'))
 
     # Update session with current selections
+    session['selected_entity'] = selected_entity
     session['selected_month'] = selected_month
     session['selected_year'] = selected_year
     session['report_type'] = report_type
@@ -89,8 +92,10 @@ def dashboard():
 
                 # Filter by entity if the user is NOT an unfiltered access user
                 if current_username not in models.UNFILTERED_ACCESS_USERS:
-                    user_entities = models.get_user(current_username).get('entities', [])
-                    df_filtered = df_filtered[df_filtered['Entity'].isin(user_entities)]
+                    user_info = models.get_user(current_username)
+                    if user_info:
+                        user_entities = user_info.get('entities', [])
+                        df_filtered = df_filtered[df_filtered['Entity'].isin(user_entities)]
 
                 # Group by 'Associated Rep Name' (and 'Entity' if it's not All Entities)
                 group_cols = ['Associated Rep Name']
@@ -156,7 +161,7 @@ def dashboard():
             # Further filter by the current user's associated username if not an unfiltered access user
             if current_username not in models.UNFILTERED_ACCESS_USERS and user_role not in ['admin']:
                 if 'Username' in df_filtered.columns:
-                    df_filtered = df_filtered[df_filtered['Username'].apply(lambda x: current_username in x.split(','))]
+                    df_filtered = df_filtered[df_filtered['Username'].apply(lambda x: current_username in str(x).split(', '))]
                 else:
                     flash('Error: "Username" column not found in data for filtering.', 'error')
                     report_data = []
@@ -209,6 +214,7 @@ def dashboard():
 
 
 @reports_bp.route('/select_entity', methods=['GET', 'POST'])
+@login_required # Ensure login_required decorator is imported and used
 @role_required(['admin', 'business_dev_manager', 'physician_provider'])
 def select_entity():
     current_username = session.get('username')
@@ -381,7 +387,7 @@ def patient_results():
     patient_name = models.get_user(current_username).get('full_name', current_username) if user_role == 'physician_provider' else current_username
 
     if user_role == 'patient':
-        results_by_dos = models.get_patient_result_files(patient_id, target_entity)
+        results_by_dos = models.get_patient_reports_for_patient_id(patient_id, target_entity)
         if not results_by_dos:
             message = "No patient results found for your ID at this entity."
         else:
@@ -395,7 +401,7 @@ def patient_results():
         message = None
 
         if search_patient_id:
-            results_by_dos = models.get_patient_result_files(search_patient_id, target_entity)
+            results_by_dos = models.get_patient_reports_for_patient_id(search_patient_id, target_entity)
             if not results_by_dos:
                 message = f"No results found for Patient ID: {search_patient_id} at {target_entity}."
             else:
@@ -423,32 +429,45 @@ def privacy_policy():
 def unauthorized():
     return render_template('unauthorized.html')
 
-@reports_bp.route('/static/dummy_files/<path:filename>')
-def serve_dummy_files(filename):
-    # This route is purely for demonstrating file downloads in the dummy data setup.
-    # In a real application, these files would be served from a secure cloud storage (S3, GCS)
-    # or a dedicated static file server, with proper access control.
-    dummy_files_dir = os.path.join(reports_bp.root_path, 'static', 'dummy_files')
-    if not os.path.exists(dummy_files_dir):
-        os.makedirs(dummy_files_dir)
-        # Create some dummy files if they don't exist
-        with open(os.path.join(dummy_files_dir, 'First_Bio_Lab_Brochure.pdf'), 'w') as f:
-            f.write("Dummy PDF content for First Bio Lab Brochure")
-        with open(os.path.join(dummy_files_dir, 'First_Bio_Lab_Services.pptx'), 'w') as f:
-            f.write("Dummy PPTX content for First Bio Lab Services")
-        with open(os.path.join(dummy_files_dir, 'Genetics_Overview.pdf'), 'w') as f:
-            f.write("Dummy PDF content for Genetics Overview")
-        with open(os.path.join(dummy_files_dir, 'AIM_Labs_Prospectus.pdf'), 'w') as f:
-            f.write("Dummy PDF content for AIM Labs Prospectus")
-        with open(os.path.join(dummy_files_dir, 'Patient_Report_AB123_2025_03.pdf'), 'w') as f:
-            f.write("Dummy PDF content for Patient Report AB123 - March 2025")
-        with open(os.path.join(dummy_files_dir, 'Lab_Results_AB123_2025_03.pdf'), 'w') as f:
-            f.write("Dummy PDF content for Lab Results AB123 - March 2025")
-        with open(os.path.join(dummy_files_dir, 'Patient_Report_AB123_2024_11.pdf'), 'w') as f:
-            f.write("Dummy PDF content for Patient Report AB123 - Nov 2024")
-        with open(os.path.join(dummy_files_dir, 'Patient_Report_CD456_2025_01.pdf'), 'w') as f:
-            f.write("Dummy PDF content for Patient Report CD456 - Jan 2025")
-        with open(os.path.join(dummy_files_dir, 'Patient_Report_IJ345_2025_05.pdf'), 'w') as f:
-            f.write("Dummy PDF content for Patient Report IJ345 - May 2025")
-    return send_from_directory(dummy_files_dir, filename)
+@reports_bp.route('/marketing_material/<path:filename>')
+def serve_marketing_material(filename):
+    """Serves dummy marketing material files."""
+    marketing_dir = os.path.join(reports_bp.root_path, 'static', 'marketing_materials')
+    os.makedirs(marketing_dir, exist_ok=True) # Ensure directory exists
+    
+    dummy_file_path = os.path.join(marketing_dir, filename)
+    if not os.path.exists(dummy_file_path):
+        with open(dummy_file_path, 'wb') as f:
+            f.write(b'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Contents 4 0 R/Parent 2 0 R>>endobj 4 0 obj<</Length 55>>stream\nBT /F1 24 Tf 100 700 Td (This is a dummy Marketing Material: ' + filename.encode() + b') Tj ET\\nendstream\\nendobj\\nxref\\n0 5\\n0000000000 65535 f\\n0000000009 00000 n\\n0000000055 00000 n\\n0000000104 00000 n\\n0000000192 00000 n\\ntrailer<</Size 5/Root 1 0 R>>startxref\\n296\\n%%EOF')
+        print(f"Created dummy Marketing Material: {dummy_file_path}")
+    
+    return send_from_directory(marketing_dir, filename, as_attachment=False)
 
+@reports_bp.route('/training_material/<path:filename>')
+def serve_training_material(filename):
+    """Serves dummy training material files."""
+    training_dir = os.path.join(reports_bp.root_path, 'static', 'training_materials')
+    os.makedirs(training_dir, exist_ok=True) # Ensure directory exists
+    
+    dummy_file_path = os.path.join(training_dir, filename)
+    if not os.path.exists(dummy_file_path):
+        with open(dummy_file_path, 'wb') as f:
+            f.write(b'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Contents 4 0 R/Parent 2 0 R>>endobj 4 0 obj<</Length 55>>stream\nBT /F1 24 Tf 100 700 Td (This is a dummy Training Material: ' + filename.encode() + b') Tj ET\\nendstream\\nendobj\\nxref\\n0 5\\n0000000000 65535 f\\n0000000009 00000 n\\n0000000055 00000 n\\n0000000104 00000 n\\n0000000192 00000 n\\ntrailer<</Size 5/Root 1 0 R>>startxref\\n296\\n%%EOF')
+        print(f"Created dummy Training Material: {dummy_file_path}")
+    
+    return send_from_directory(training_dir, filename, as_attachment=False)
+
+
+@reports_bp.route('/patient_results/<path:filename>')
+def serve_patient_results(filename):
+    """Serves dummy patient result files."""
+    patient_reports_dir = os.path.join(reports_bp.root_path, 'static', 'patient_reports')
+    os.makedirs(patient_reports_dir, exist_ok=True) # Ensure directory exists
+    
+    dummy_file_path = os.path.join(patient_reports_dir, filename)
+    if not os.path.exists(dummy_file_path):
+        with open(dummy_file_path, 'wb') as f:
+            f.write(b'%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj 3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Contents 4 0 R/Parent 2 0 R>>endobj 4 0 obj<</Length 55>>stream\nBT /F1 24 Tf 100 700 Td (This is a dummy Patient Report: ' + filename.encode() + b') Tj ET\\nendstream\\nendobj\\nxref\\n0 5\\n0000000000 65535 f\\n0000000009 00000 n\\n0000000055 00000 n\\n0000000104 00000 n\\n0000000192 00000 n\\ntrailer<</Size 5/Root 1 0 R>>startxref\\n296\\n%%EOF')
+        print(f"Created dummy Patient Report: {dummy_file_path}")
+    
+    return send_from_directory(patient_reports_dir, filename, as_attachment=False)
