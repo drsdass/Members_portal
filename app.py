@@ -6,9 +6,13 @@ from flask_moment import Moment
 import datetime
 import re
 from functools import wraps
+import sys # Added: Import sys module
+
+# Added: Add the current directory to sys.path
+# This ensures Python can find sibling modules (auth, reports, models)
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 # Import blueprints using absolute imports for a flat project structure
-# When app.py is at the root and not itself part of a package, use direct module names
 from auth import auth_bp
 from reports import reports_bp
 import models # Import models to access centralized data like users and MASTER_ENTITIES
